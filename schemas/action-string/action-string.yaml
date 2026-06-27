@@ -1,0 +1,91 @@
+# BASIS Action String — published contract.
+#
+# This file PUBLISHES the composite action-name format decided in
+# basis-architecture (docs/architecture/action-vocabulary.md) and enforced today
+# by basis-core. It does not invent or redesign the format. Architecture governs;
+# schemas publish; implementations consume.
+#
+# The `lifecycle` is `experimental` because this published contract is new in
+# basis-schemas, not because the action-string format is unsettled.
+
+contract:
+  name: action-string
+  title: BASIS Action String
+  version: 0.1.0
+  lifecycle: experimental
+  governed_by: basis-architecture
+  published_by: basis-schemas
+  source: docs/architecture/action-vocabulary.md
+  description: >-
+    The composite action-name format the policy engine evaluates and the audit
+    record stores: a verb followed by a domain and an optional object, separated
+    by colons. Publishes the {verb}:{domain}[:{object}] structure decided in
+    basis-architecture and enforced by basis-core's action validator. This
+    contract defines the structural shape of an action string; the set of valid
+    verbs is governed by the separate vocabulary contract.
+  # The verb segment draws its allowed values from the published vocabulary
+  # contract. This contract publishes the *shape*; vocabulary publishes the
+  # *verbs*. Declared once, here, so consumers know the dependency.
+  depends_on:
+    - vocabulary
+
+action_string:
+  # Human-readable structure. Square brackets denote the optional object segment.
+  structure: "{verb}:{domain}[:{object}]"
+  separator: ":"
+  min_segments: 2
+  max_segments: 3
+
+  # Regular expression that validates a full action string. Anchored; a string is
+  # a well-formed action string if and only if it matches. Two or three
+  # colon-separated segments, each a lowercase token.
+  pattern: "^[a-z][a-z0-9_-]*:[a-z][a-z0-9_-]*(:[a-z][a-z0-9_-]*)?$"
+
+  # The shape every individual segment must satisfy: a lowercase letter followed
+  # by lowercase letters, digits, hyphens, or underscores. Mirrors the segment
+  # charset basis-core enforces in its action validator.
+  segment_pattern: "^[a-z][a-z0-9_-]*$"
+
+  segments:
+    - id: verb
+      required: true
+      position: 1
+      description: >-
+        The operation being requested. Must be one of the canonical verbs
+        published by the vocabulary contract.
+      governed_by: vocabulary
+    - id: domain
+      required: true
+      position: 2
+      description: >-
+        The functional domain or system category that owns the resource being
+        acted upon. Non-empty.
+    - id: object
+      required: false
+      position: 3
+      description: >-
+        The specific resource object within the domain. Optional; non-empty when
+        present.
+
+  constraints:
+    - The string must have exactly two or three colon-separated segments.
+    - Every segment must be non-empty and match the segment pattern.
+    - The verb (first segment) must be a verb published by the vocabulary contract.
+    - The domain (second segment) is required.
+    - The object (third segment) is optional and, when present, must be non-empty.
+    - A fourth or further segment is invalid.
+
+  examples:
+    valid:
+      - read:ahu
+      - write:setpoint
+      - execute:command
+      - read:hvac:setpoint
+      - write:hvac:setpoint
+      - read:audit:log
+    invalid:
+      - read              # only one segment; no domain
+      - "read:"           # empty domain segment
+      - ":ahu"            # empty verb segment
+      - "read::setpoint"  # empty middle segment
+      - read:ahu:setpoint:extra  # four segments; object may not be subdivided

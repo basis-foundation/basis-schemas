@@ -41,9 +41,9 @@ PLANNED_CONTRACTS: Final[tuple[str, ...]] = (
 )
 
 #: Contracts that have actually been published under ``schemas/`` (a real
-#: machine-readable definition, not a placeholder). The vocabulary contract is
-#: the first; the rest of ``PLANNED_CONTRACTS`` remain placeholders.
-PUBLISHED_CONTRACTS: Final[tuple[str, ...]] = ("vocabulary",)
+#: machine-readable definition, not a placeholder). Vocabulary was first,
+#: action-string second; the rest of ``PLANNED_CONTRACTS`` remain placeholders.
+PUBLISHED_CONTRACTS: Final[tuple[str, ...]] = ("vocabulary", "action-string")
 
 #: The lifecycle states a published contract may carry, lowest to highest
 #: commitment. See ``docs/contract-governance.md``.

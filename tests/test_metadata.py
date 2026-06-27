@@ -41,9 +41,13 @@ def test_contract_states_are_ordered_by_commitment() -> None:
 
 
 def test_published_contracts_is_a_subset_in_planned_order() -> None:
-    # The first contract — vocabulary — is published; the rest remain planned.
-    assert basis_schemas.PUBLISHED_CONTRACTS == ("vocabulary",)
-    assert set(basis_schemas.PUBLISHED_CONTRACTS).issubset(set(basis_schemas.PLANNED_CONTRACTS))
+    # The first two contracts — vocabulary and action-string — are published; the
+    # rest remain planned. Published contracts must be a prefix of the planned
+    # order (migration proceeds in order, lowest-risk first).
+    assert basis_schemas.PUBLISHED_CONTRACTS == ("vocabulary", "action-string")
+    published = basis_schemas.PUBLISHED_CONTRACTS
+    planned_prefix = basis_schemas.PLANNED_CONTRACTS[: len(published)]
+    assert published == planned_prefix
 
 
 def test_repository_is_past_phase1_foundation() -> None:
