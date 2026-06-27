@@ -12,6 +12,19 @@ contract versions and lifecycle states follow
 
 ### Added
 
+- **Resource identifier contract published** (third machine-readable contract).
+  `schemas/resource-identifier/resource-identifier.yaml` publishes the canonical
+  typed resource-identifier format `{resource_type}:{local_resource_id}` decided
+  in `basis-architecture`
+  (`docs/architecture/resource-identifier-reconciliation.md`) and enforced by
+  `basis-core`. Contract version `0.1.0`, lifecycle `experimental`. The published
+  pattern accepts exactly two non-empty colon-separated segments (a resource type
+  prefix and a local resource id) and rejects single, empty, or extra segments.
+  Adapters emit the resource type and local resource id as separate fields, the
+  gateway composes them into the canonical identifier, and the kernel consumes it
+  and derives the resource type from the prefix.
+- `docs/resource-identifier.md` — short companion explaining the published
+  contract.
 - **Action string contract published** (second machine-readable contract).
   `schemas/action-string/action-string.yaml` publishes the composite action-name
   format `{verb}:{domain}[:{object}]` decided in `basis-architecture`
@@ -38,6 +51,13 @@ contract versions and lifecycle states follow
 
 ### Changed
 
+- Removed `schemas/resource-identifier/PLACEHOLDER.md`; the directory now holds
+  the real contract. The remaining three contract directories
+  (`decision-request`, `decision-response`, `audit-event`) remain placeholders.
+- `basis_schemas.PUBLISHED_CONTRACTS` now includes `resource-identifier` as the
+  third published contract; `README.md`, `schemas/README.md`, and
+  `docs/migration-plan.md` updated to reflect it as published rather than next
+  planned, with `decision-request` now the next planned migration.
 - Removed `schemas/vocabulary/PLACEHOLDER.md`; the directory now holds the real
   contract. All other contract directories remain placeholders.
 - `README.md`, `schemas/README.md`, `docs/migration-plan.md`, and
