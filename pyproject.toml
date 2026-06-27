@@ -14,7 +14,10 @@ keywords = ["basis", "schemas", "contracts", "authorization", "ot"]
 dependencies = []
 
 [project.optional-dependencies]
-dev = ["pytest>=7", "ruff>=0.4", "mypy>=1.8"]
+# PyYAML is needed to parse the published YAML contracts in tests. It is a dev
+# dependency only: this repository publishes static contract files and carries
+# no runtime behavior.
+dev = ["pytest>=7", "ruff>=0.4", "mypy>=1.8", "PyYAML>=6"]
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/basis_schemas"]

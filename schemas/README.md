@@ -1,9 +1,10 @@
 # Schemas
 
 This directory holds the published, machine-readable contracts of the BASIS
-ecosystem. During Phase 1 it contains **placeholder directories only** — one per
-planned first contract. No real contract has been migrated yet. The contracts,
-their order, and what is deferred are described in
+ecosystem. The first contract — the action **vocabulary** — is now published in
+[`vocabulary/vocabulary.yaml`](vocabulary/vocabulary.yaml); the remaining planned
+contracts are still **placeholder directories**. The contracts, their order, and
+what is deferred are described in
 [`../docs/migration-plan.md`](../docs/migration-plan.md); the lifecycle states
 referenced below are defined in
 [`../docs/contract-governance.md`](../docs/contract-governance.md).
@@ -12,25 +13,49 @@ referenced below are defined in
 
 ## Directory structure
 
-Each contract lives in its own directory, named for the contract. The placeholder
-directories present today are:
+Each contract lives in its own directory, named for the contract:
 
 ```text
 schemas/
-├── vocabulary/             the five canonical action verbs
-├── action-string/          {verb}:{domain}[:{object}]
-├── resource-identifier/    {type}:{qualifier}
-├── decision-request/       kernel input shape
-├── decision-response/      kernel output shape
-└── audit-event/            canonical audit structure
+├── vocabulary/             the five canonical action verbs   — PUBLISHED (vocabulary.yaml)
+├── action-string/          {verb}:{domain}[:{object}]        — placeholder
+├── resource-identifier/    {type}:{qualifier}                — placeholder
+├── decision-request/       kernel input shape                — placeholder
+├── decision-response/      kernel output shape               — placeholder
+└── audit-event/            canonical audit structure         — placeholder
 ```
 
-Each directory currently holds only a `PLACEHOLDER.md` describing the contract it
-will eventually publish. When a contract migrates, its directory will gain the
-actual schema definition, its version and state metadata, a changelog, and
-(later) compatibility fixtures. The exact file layout and the schema-definition
-format are chosen when the first contract migrates — Phase 1 does not commit the
-repository to a particular framework before any schema exists.
+A placeholder directory holds only a `PLACEHOLDER.md` describing the contract it
+will eventually publish. When a contract migrates, its directory gains the actual
+schema definition with embedded version and lifecycle metadata, and (later) a
+changelog and compatibility fixtures. The vocabulary contract migrated first and
+fixes the conventions the rest follow.
+
+## Metadata pattern (the expected shape for every contract)
+
+Every published contract carries a `contract:` block with explicit metadata, so a
+consumer can read its identity, version, and lifecycle from the contract alone.
+The vocabulary contract establishes the pattern future contracts reuse:
+
+```yaml
+contract:
+  name: <contract-id>          # matches the directory name
+  title: <human-readable title>
+  version: <semver>            # e.g. 0.1.0
+  lifecycle: experimental      # experimental | candidate | stable
+  governed_by: basis-architecture   # where the contract is decided
+  published_by: basis-schemas       # where it is published
+  source: <path in basis-architecture>
+  description: <one-paragraph summary>
+
+<contract-body>:               # the contract's own payload, e.g. `vocabulary:`
+  ...
+```
+
+YAML is the chosen format: it is human-diffable, comment-friendly, and trivially
+machine-readable. This repository deliberately does **not** adopt a full
+schema-generation framework yet; the pattern above is the smallest stable shape
+that proves the publish-and-consume model.
 
 ## Schema lifecycle
 

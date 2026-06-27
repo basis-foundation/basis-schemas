@@ -1,0 +1,49 @@
+# BASIS Action Vocabulary — published contract.
+#
+# This file PUBLISHES the canonical action verbs decided in basis-architecture
+# (docs/architecture/action-vocabulary.md). It does not invent, rename, or
+# redefine verbs. Architecture governs; schemas publish; implementations consume.
+#
+# The `lifecycle` is `experimental` because this published contract FORMAT and
+# its consumption path are new — this is the first machine-readable contract in
+# basis-schemas — not because the architectural vocabulary is unsettled.
+
+contract:
+  name: vocabulary
+  title: BASIS Action Vocabulary
+  version: 0.1.0
+  lifecycle: experimental
+  governed_by: basis-architecture
+  published_by: basis-schemas
+  source: docs/architecture/action-vocabulary.md
+  description: >-
+    Canonical action verbs shared across BASIS components. Publishes the
+    controlled verb set decided in basis-architecture as a machine-readable
+    companion to the action-vocabulary governance rules. This contract carries
+    verbs only; the composite action-name format ({verb}:{domain}[:{object}])
+    is a separate, later contract.
+
+vocabulary:
+  verbs:
+    - id: read
+      description: >-
+        Retrieve the current value, state, or configuration of a resource,
+        without modification.
+    - id: write
+      description: >-
+        Modify the value, setpoint, configuration parameter, or state of a
+        resource. Absorbs structural configuration changes; there is no
+        separate configure verb.
+    - id: execute
+      description: >-
+        Cause the resource to perform an operation or command, as distinct from
+        writing a value (method invocation, select-before-operate / operate,
+        overrides, command points, acknowledgements).
+    - id: browse
+      description: >-
+        Enumerate or navigate the resource or address space without retrieving
+        operational values.
+    - id: subscribe
+      description: >-
+        Establish a subscription to ongoing telemetry or event notifications
+        from a resource.

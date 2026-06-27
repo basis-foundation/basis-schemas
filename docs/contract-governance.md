@@ -21,8 +21,11 @@ with lead time.
 ## Contract states
 
 Every published contract carries one of three lifecycle states. The state is
-declared in the contract's own metadata and is the single signal a consumer
-reads to know how much it can rely on the shape.
+declared in the contract's own metadata — concretely, the `contract.lifecycle`
+field, as in the first published contract
+[`../schemas/vocabulary/vocabulary.yaml`](../schemas/vocabulary/vocabulary.yaml)
+(`lifecycle: experimental`) — and is the single signal a consumer reads to know
+how much it can rely on the shape.
 
 ### Experimental
 
