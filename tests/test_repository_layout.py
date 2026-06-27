@@ -1,9 +1,10 @@
-"""Checks that the repository skeleton is present and still a foundation.
+"""Checks that the repository skeleton is present and consistent.
 
-These tests assert that the required documentation exists and that each planned
-contract has a placeholder directory containing only a placeholder — i.e. that no
-real contract has been migrated. They are deliberately structural; they assert
-the *shape of the repository*, not the *shape of any contract*.
+These tests assert that the required documentation exists, that published
+contracts have a real schema definition (no leftover placeholder), and that
+still-deferred contracts remain placeholders. They are deliberately structural;
+they assert the *shape of the repository*, not the *shape of any contract*. The
+contract's own shape is checked in ``test_vocabulary_contract.py``.
 """
 
 from __future__ import annotations
@@ -28,21 +29,37 @@ def test_required_docs_exist() -> None:
     assert not missing, f"missing required files: {missing}"
 
 
-def test_each_planned_contract_has_a_placeholder_directory() -> None:
+def test_every_planned_contract_has_a_directory() -> None:
     for contract in basis_schemas.PLANNED_CONTRACTS:
         directory = REPO_ROOT / "schemas" / contract
         assert directory.is_dir(), f"missing schema directory: {contract}"
-        assert (directory / "PLACEHOLDER.md").is_file(), f"missing placeholder in: {contract}"
 
 
-def test_no_real_contract_has_been_migrated() -> None:
-    # Phase 1 invariant: schema directories contain placeholders only. A real
-    # contract would arrive as a schema definition file (e.g. .json / .yaml).
-    # Finding one means this test — and the phase guard — must be updated.
-    contract_files = []
-    for contract in basis_schemas.PLANNED_CONTRACTS:
+def test_deferred_contracts_remain_placeholders() -> None:
+    # Contracts not yet published must still hold a PLACEHOLDER.md and nothing
+    # else. A stray schema file here means a contract was migrated without
+    # updating PUBLISHED_CONTRACTS.
+    deferred = [
+        c for c in basis_schemas.PLANNED_CONTRACTS if c not in basis_schemas.PUBLISHED_CONTRACTS
+    ]
+    for contract in deferred:
         directory = REPO_ROOT / "schemas" / contract
-        for entry in directory.iterdir():
-            if entry.is_file() and entry.name != "PLACEHOLDER.md":
-                contract_files.append(str(entry.relative_to(REPO_ROOT)))
-    assert not contract_files, f"unexpected non-placeholder files during Phase 1: {contract_files}"
+        assert (directory / "PLACEHOLDER.md").is_file(), f"missing placeholder in: {contract}"
+        unexpected = [
+            entry.name
+            for entry in directory.iterdir()
+            if entry.is_file() and entry.name != "PLACEHOLDER.md"
+        ]
+        assert not unexpected, f"unexpected files in deferred contract {contract}: {unexpected}"
+
+
+def test_published_contracts_have_no_placeholder() -> None:
+    # A published contract directory holds the real definition, not a leftover
+    # placeholder.
+    for contract in basis_schemas.PUBLISHED_CONTRACTS:
+        directory = REPO_ROOT / "schemas" / contract
+        assert not (directory / "PLACEHOLDER.md").exists(), (
+            f"published contract {contract} still has a PLACEHOLDER.md"
+        )
+        real_files = [e.name for e in directory.iterdir() if e.is_file()]
+        assert real_files, f"published contract {contract} has no schema file"

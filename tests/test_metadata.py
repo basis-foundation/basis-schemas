@@ -40,7 +40,13 @@ def test_contract_states_are_ordered_by_commitment() -> None:
     )
 
 
-def test_repository_is_still_phase1_foundation() -> None:
-    # Phase 1 ships placeholders only. This guard flips when the first contract
-    # is migrated and the metadata is updated accordingly.
-    assert basis_schemas.is_phase1_foundation() is True
+def test_published_contracts_is_a_subset_in_planned_order() -> None:
+    # The first contract — vocabulary — is published; the rest remain planned.
+    assert basis_schemas.PUBLISHED_CONTRACTS == ("vocabulary",)
+    assert set(basis_schemas.PUBLISHED_CONTRACTS).issubset(set(basis_schemas.PLANNED_CONTRACTS))
+
+
+def test_repository_is_past_phase1_foundation() -> None:
+    # The placeholder-only foundation phase is over now that the vocabulary
+    # contract is published. This flips back only if all contracts are unpublished.
+    assert basis_schemas.is_phase1_foundation() is False

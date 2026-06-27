@@ -7,8 +7,10 @@ initial migration candidates decided in `basis-architecture`
 commitment: the actual sequence is confirmed contract by contract as each is
 decided ready in `basis-architecture`.
 
-No contract has been migrated yet. Phase 1 establishes the repository foundation
-— documentation, tooling, and placeholder directories — only.
+The **vocabulary** contract has been published (see
+[`../schemas/vocabulary/vocabulary.yaml`](../schemas/vocabulary/vocabulary.yaml)).
+It is the first machine-readable contract in `basis-schemas`; the remaining
+contracts below are still placeholders.
 
 ---
 
@@ -16,12 +18,13 @@ No contract has been migrated yet. Phase 1 establishes the repository foundation
 
 Contracts migrate in dependency-and-stability order, lowest-risk first:
 
-1. **Vocabulary** — the five canonical action verbs (`read`, `write`,
-   `execute`, `browse`, `subscribe`). The smallest, most-settled contract,
-   already governed by a mature document in `basis-architecture`. Migrating it
-   first proves the publish-and-consume mechanism on low-risk content and lets
-   the provisional `basis-console` vocabulary copy be retired.
-2. **Action string** — the composite action-name format
+1. **Vocabulary** — ✅ **published** (`experimental`). The five canonical action
+   verbs (`read`, `write`, `execute`, `browse`, `subscribe`). The smallest,
+   most-settled contract, already governed by a mature document in
+   `basis-architecture`. Migrating it first proves the publish-and-consume
+   mechanism on low-risk content and lets the provisional `basis-console`
+   vocabulary copy be retired.
+2. **Action string** — ⬅ **next planned**. The composite action-name format
    `{verb}:{domain}[:{object}]`. Depends only on the vocabulary; it is the format
    that wraps the verbs. Stable in `basis-core` today.
 3. **Resource identifier** — the canonical typed identifier `{type}:{qualifier}`.
@@ -40,8 +43,8 @@ Contracts migrate in dependency-and-stability order, lowest-risk first:
    benefits from the earlier contracts being settled first.
 
 ```text
-1. vocabulary
-2. action-string        (depends on vocabulary)
+1. vocabulary           ✅ published (experimental)
+2. action-string        ⬅ next planned (depends on vocabulary)
 3. resource-identifier  (parallel format)
 4. decision-request     (composes action-string + resource-identifier)
 5. decision-response    (pairs with decision-request)
