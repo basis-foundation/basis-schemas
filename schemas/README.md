@@ -1,10 +1,11 @@
 # Schemas
 
 This directory holds the published, machine-readable contracts of the BASIS
-ecosystem. The first contract — the action **vocabulary** — is now published in
-[`vocabulary/vocabulary.yaml`](vocabulary/vocabulary.yaml); the remaining planned
-contracts are still **placeholder directories**. The contracts, their order, and
-what is deferred are described in
+ecosystem. Two contracts are now published — the action **vocabulary** in
+[`vocabulary/vocabulary.yaml`](vocabulary/vocabulary.yaml) and the **action
+string** format in [`action-string/action-string.yaml`](action-string/action-string.yaml);
+the remaining planned contracts are still **placeholder directories**. The
+contracts, their order, and what is deferred are described in
 [`../docs/migration-plan.md`](../docs/migration-plan.md); the lifecycle states
 referenced below are defined in
 [`../docs/contract-governance.md`](../docs/contract-governance.md).
@@ -18,7 +19,7 @@ Each contract lives in its own directory, named for the contract:
 ```text
 schemas/
 ├── vocabulary/             the five canonical action verbs   — PUBLISHED (vocabulary.yaml)
-├── action-string/          {verb}:{domain}[:{object}]        — placeholder
+├── action-string/          {verb}:{domain}[:{object}]        — PUBLISHED (action-string.yaml)
 ├── resource-identifier/    {type}:{qualifier}                — placeholder
 ├── decision-request/       kernel input shape                — placeholder
 ├── decision-response/      kernel output shape               — placeholder
@@ -47,10 +48,16 @@ contract:
   published_by: basis-schemas       # where it is published
   source: <path in basis-architecture>
   description: <one-paragraph summary>
+  depends_on: [<contract-id>, ...]  # optional; other contracts this one builds on
 
 <contract-body>:               # the contract's own payload, e.g. `vocabulary:`
   ...
 ```
+
+When a contract builds on another, it declares the dependency with `depends_on`.
+The action-string contract, for example, declares `depends_on: [vocabulary]`
+because its verb segment draws its allowed values from the vocabulary contract —
+the shape is published here, the verbs are published there.
 
 YAML is the chosen format: it is human-diffable, comment-friendly, and trivially
 machine-readable. This repository deliberately does **not** adopt a full

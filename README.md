@@ -11,11 +11,12 @@ authorization in operational technology (OT) environments, governed by the
 Basis Foundation. This repository is the single source of truth for the data
 shapes those components exchange.
 
-> **Status: first contract published.** The action **vocabulary** — the five
-> canonical verbs — is now published under
-> [`schemas/vocabulary/vocabulary.yaml`](schemas/vocabulary/vocabulary.yaml) as
-> the first machine-readable contract in this repository. The remaining planned
-> contracts are still placeholder directories. See
+> **Status: two contracts published.** The action **vocabulary** — the five
+> canonical verbs — is published under
+> [`schemas/vocabulary/vocabulary.yaml`](schemas/vocabulary/vocabulary.yaml),
+> and the **action string** format `{verb}:{domain}[:{object}]` under
+> [`schemas/action-string/action-string.yaml`](schemas/action-string/action-string.yaml).
+> The remaining planned contracts are still placeholder directories. See
 > [`docs/migration-plan.md`](docs/migration-plan.md).
 
 ---
@@ -69,17 +70,20 @@ in `basis-architecture`, it does not belong here yet.
 ## First contracts
 
 The following contracts migrate in dependency-and-stability order (lowest-risk
-first). The vocabulary contract is **published**; the rest are planned and remain
-placeholders.
+first). The vocabulary and action-string contracts are **published**; the rest
+are planned and remain placeholders.
 
 1. **Vocabulary** — _published_ (`experimental`). The five canonical action
    verbs (`read`, `write`, `execute`, `browse`, `subscribe`), published as the
    machine-readable companion to the governance rules in `basis-architecture`.
    See [`schemas/vocabulary/vocabulary.yaml`](schemas/vocabulary/vocabulary.yaml)
    and [`docs/vocabulary.md`](docs/vocabulary.md).
-2. **Action string** — _next planned_. The composite action-name format
-   `{verb}:{domain}[:{object}]` (for example `read:hvac:setpoint`).
-3. **Resource identifier** — the canonical typed identifier `{type}:{qualifier}`
+2. **Action string** — _published_ (`experimental`). The composite action-name
+   format `{verb}:{domain}[:{object}]` (for example `read:hvac:setpoint`),
+   depending on the vocabulary contract for its verb. See
+   [`schemas/action-string/action-string.yaml`](schemas/action-string/action-string.yaml)
+   and [`docs/action-string.md`](docs/action-string.md).
+3. **Resource identifier** — _next planned_. The canonical typed identifier `{type}:{qualifier}`
    (for example `ahu:rooftop-1`).
 4. **Decision request** — the kernel input: subject, composite action, optional
    canonical resource identifier, and context.
@@ -107,7 +111,7 @@ basis-schemas/
 ├── schemas/
 │   ├── README.md                  directory structure and schema lifecycle
 │   ├── vocabulary/                published — vocabulary.yaml (experimental)
-│   ├── action-string/             placeholder — not yet migrated
+│   ├── action-string/             published — action-string.yaml (experimental)
 │   ├── resource-identifier/       placeholder — not yet migrated
 │   ├── decision-request/          placeholder — not yet migrated
 │   ├── decision-response/         placeholder — not yet migrated

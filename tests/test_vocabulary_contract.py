@@ -106,16 +106,7 @@ def test_placeholder_removed_from_vocabulary_dir() -> None:
     )
 
 
-def test_only_vocabulary_has_been_published() -> None:
-    # Phase 2 publishes exactly one contract. Every other planned contract must
-    # still be a placeholder directory holding only PLACEHOLDER.md.
-    assert basis_schemas.PUBLISHED_CONTRACTS == ("vocabulary",)
-    deferred = [
-        c for c in basis_schemas.PLANNED_CONTRACTS if c not in basis_schemas.PUBLISHED_CONTRACTS
-    ]
-    for contract in deferred:
-        directory = REPO_ROOT / "schemas" / contract
-        entries = sorted(p.name for p in directory.iterdir() if p.is_file())
-        assert entries == ["PLACEHOLDER.md"], (
-            f"{contract} should remain a placeholder, found: {entries}"
-        )
+def test_vocabulary_is_a_published_contract() -> None:
+    # Vocabulary was the first contract published. (The full published/placeholder
+    # invariant across all directories is asserted in test_repository_layout.py.)
+    assert "vocabulary" in basis_schemas.PUBLISHED_CONTRACTS

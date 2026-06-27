@@ -12,6 +12,16 @@ contract versions and lifecycle states follow
 
 ### Added
 
+- **Action string contract published** (second machine-readable contract).
+  `schemas/action-string/action-string.yaml` publishes the composite action-name
+  format `{verb}:{domain}[:{object}]` decided in `basis-architecture`
+  (`docs/architecture/action-vocabulary.md`) and enforced by `basis-core`.
+  Contract version `0.1.0`, lifecycle `experimental`. It declares
+  `depends_on: [vocabulary]`: the format is published here, the valid verbs are
+  published by the vocabulary contract. The published pattern accepts two or
+  three colon-separated lowercase segments (verb, domain, optional object) and
+  rejects empty or extra segments.
+- `docs/action-string.md` — short companion explaining the published contract.
 - **Vocabulary contract published** (first machine-readable contract).
   `schemas/vocabulary/vocabulary.yaml` publishes the five canonical action verbs
   — `read`, `write`, `execute`, `browse`, `subscribe` — as decided in

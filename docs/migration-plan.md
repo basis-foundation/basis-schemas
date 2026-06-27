@@ -7,10 +7,12 @@ initial migration candidates decided in `basis-architecture`
 commitment: the actual sequence is confirmed contract by contract as each is
 decided ready in `basis-architecture`.
 
-The **vocabulary** contract has been published (see
-[`../schemas/vocabulary/vocabulary.yaml`](../schemas/vocabulary/vocabulary.yaml)).
-It is the first machine-readable contract in `basis-schemas`; the remaining
-contracts below are still placeholders.
+The **vocabulary** and **action-string** contracts have been published (see
+[`../schemas/vocabulary/vocabulary.yaml`](../schemas/vocabulary/vocabulary.yaml)
+and
+[`../schemas/action-string/action-string.yaml`](../schemas/action-string/action-string.yaml)).
+They are the first two machine-readable contracts in `basis-schemas`; the
+remaining contracts below are still placeholders.
 
 ---
 
@@ -24,12 +26,14 @@ Contracts migrate in dependency-and-stability order, lowest-risk first:
    `basis-architecture`. Migrating it first proves the publish-and-consume
    mechanism on low-risk content and lets the provisional `basis-console`
    vocabulary copy be retired.
-2. **Action string** — ⬅ **next planned**. The composite action-name format
-   `{verb}:{domain}[:{object}]`. Depends only on the vocabulary; it is the format
-   that wraps the verbs. Stable in `basis-core` today.
-3. **Resource identifier** — the canonical typed identifier `{type}:{qualifier}`.
-   The parallel format contract, also stable in `basis-core`. Together with the
-   action string it covers the two canonical identifier shapes.
+2. **Action string** — ✅ **published** (`experimental`). The composite
+   action-name format `{verb}:{domain}[:{object}]`. Depends only on the
+   vocabulary; it is the format that wraps the verbs. Stable in `basis-core`
+   today.
+3. **Resource identifier** — ⬅ **next planned**. The canonical typed identifier
+   `{type}:{qualifier}`. The parallel format contract, also stable in
+   `basis-core`. Together with the action string it covers the two canonical
+   identifier shapes.
 4. **Decision request** — the kernel input: subject, composite action, optional
    canonical resource identifier, and context. Composes the action string and
    resource identifier, so it can only follow once both formats are published.
@@ -44,8 +48,8 @@ Contracts migrate in dependency-and-stability order, lowest-risk first:
 
 ```text
 1. vocabulary           ✅ published (experimental)
-2. action-string        ⬅ next planned (depends on vocabulary)
-3. resource-identifier  (parallel format)
+2. action-string        ✅ published (experimental) (depends on vocabulary)
+3. resource-identifier  ⬅ next planned (parallel format)
 4. decision-request     (composes action-string + resource-identifier)
 5. decision-response    (pairs with decision-request)
 6. audit-event          (references action, resource, policy version)
