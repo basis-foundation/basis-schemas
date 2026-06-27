@@ -1,9 +1,11 @@
 # Schemas
 
 This directory holds the published, machine-readable contracts of the BASIS
-ecosystem. Two contracts are now published — the action **vocabulary** in
-[`vocabulary/vocabulary.yaml`](vocabulary/vocabulary.yaml) and the **action
-string** format in [`action-string/action-string.yaml`](action-string/action-string.yaml);
+ecosystem. Three contracts are now published — the action **vocabulary** in
+[`vocabulary/vocabulary.yaml`](vocabulary/vocabulary.yaml), the **action
+string** format in [`action-string/action-string.yaml`](action-string/action-string.yaml),
+and the **resource identifier** format in
+[`resource-identifier/resource-identifier.yaml`](resource-identifier/resource-identifier.yaml);
 the remaining planned contracts are still **placeholder directories**. The
 contracts, their order, and what is deferred are described in
 [`../docs/migration-plan.md`](../docs/migration-plan.md); the lifecycle states
@@ -18,12 +20,12 @@ Each contract lives in its own directory, named for the contract:
 
 ```text
 schemas/
-├── vocabulary/             the five canonical action verbs   — PUBLISHED (vocabulary.yaml)
-├── action-string/          {verb}:{domain}[:{object}]        — PUBLISHED (action-string.yaml)
-├── resource-identifier/    {type}:{qualifier}                — placeholder
-├── decision-request/       kernel input shape                — placeholder
-├── decision-response/      kernel output shape               — placeholder
-└── audit-event/            canonical audit structure         — placeholder
+├── vocabulary/             the five canonical action verbs       — PUBLISHED (vocabulary.yaml)
+├── action-string/          {verb}:{domain}[:{object}]            — PUBLISHED (action-string.yaml)
+├── resource-identifier/    {resource_type}:{local_resource_id}  — PUBLISHED (resource-identifier.yaml)
+├── decision-request/       kernel input shape                   — placeholder
+├── decision-response/      kernel output shape                  — placeholder
+└── audit-event/            canonical audit structure            — placeholder
 ```
 
 A placeholder directory holds only a `PLACEHOLDER.md` describing the contract it

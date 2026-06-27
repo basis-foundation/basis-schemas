@@ -11,11 +11,14 @@ authorization in operational technology (OT) environments, governed by the
 Basis Foundation. This repository is the single source of truth for the data
 shapes those components exchange.
 
-> **Status: two contracts published.** The action **vocabulary** — the five
+> **Status: three contracts published.** The action **vocabulary** — the five
 > canonical verbs — is published under
 > [`schemas/vocabulary/vocabulary.yaml`](schemas/vocabulary/vocabulary.yaml),
-> and the **action string** format `{verb}:{domain}[:{object}]` under
-> [`schemas/action-string/action-string.yaml`](schemas/action-string/action-string.yaml).
+> the **action string** format `{verb}:{domain}[:{object}]` under
+> [`schemas/action-string/action-string.yaml`](schemas/action-string/action-string.yaml),
+> and the **resource identifier** format `{resource_type}:{local_resource_id}`
+> under
+> [`schemas/resource-identifier/resource-identifier.yaml`](schemas/resource-identifier/resource-identifier.yaml).
 > The remaining planned contracts are still placeholder directories. See
 > [`docs/migration-plan.md`](docs/migration-plan.md).
 
@@ -70,8 +73,8 @@ in `basis-architecture`, it does not belong here yet.
 ## First contracts
 
 The following contracts migrate in dependency-and-stability order (lowest-risk
-first). The vocabulary and action-string contracts are **published**; the rest
-are planned and remain placeholders.
+first). The vocabulary, action-string, and resource-identifier contracts are
+**published**; the rest are planned and remain placeholders.
 
 1. **Vocabulary** — _published_ (`experimental`). The five canonical action
    verbs (`read`, `write`, `execute`, `browse`, `subscribe`), published as the
@@ -83,8 +86,12 @@ are planned and remain placeholders.
    depending on the vocabulary contract for its verb. See
    [`schemas/action-string/action-string.yaml`](schemas/action-string/action-string.yaml)
    and [`docs/action-string.md`](docs/action-string.md).
-3. **Resource identifier** — _next planned_. The canonical typed identifier `{type}:{qualifier}`
-   (for example `ahu:rooftop-1`).
+3. **Resource identifier** — _published_ (`experimental`). The canonical typed
+   identifier `{resource_type}:{local_resource_id}` (for example `ahu:rooftop-1`).
+   Adapters emit the resource type and local resource id separately; the gateway
+   composes them; the kernel consumes the composed identifier. See
+   [`schemas/resource-identifier/resource-identifier.yaml`](schemas/resource-identifier/resource-identifier.yaml)
+   and [`docs/resource-identifier.md`](docs/resource-identifier.md).
 4. **Decision request** — the kernel input: subject, composite action, optional
    canonical resource identifier, and context.
 5. **Decision response** — the kernel output: outcome, reason, evaluating
@@ -112,7 +119,7 @@ basis-schemas/
 │   ├── README.md                  directory structure and schema lifecycle
 │   ├── vocabulary/                published — vocabulary.yaml (experimental)
 │   ├── action-string/             published — action-string.yaml (experimental)
-│   ├── resource-identifier/       placeholder — not yet migrated
+│   ├── resource-identifier/       published — resource-identifier.yaml (experimental)
 │   ├── decision-request/          placeholder — not yet migrated
 │   ├── decision-response/         placeholder — not yet migrated
 │   └── audit-event/               placeholder — not yet migrated

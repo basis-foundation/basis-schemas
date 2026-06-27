@@ -1,0 +1,96 @@
+# BASIS Resource Identifier — published contract.
+#
+# This file PUBLISHES the canonical resource-identifier format decided in
+# basis-architecture (docs/architecture/resource-identifier-reconciliation.md)
+# and enforced today by basis-core. It does not invent or redesign the format.
+# Architecture governs; schemas publish; implementations consume.
+#
+# The `lifecycle` is `experimental` because this published contract is new in
+# basis-schemas, not because the resource-identifier format is unsettled.
+
+contract:
+  name: resource-identifier
+  title: BASIS Resource Identifier
+  version: 0.1.0
+  lifecycle: experimental
+  governed_by: basis-architecture
+  published_by: basis-schemas
+  source: docs/architecture/resource-identifier-reconciliation.md
+  description: >-
+    The canonical typed resource identifier the policy engine evaluates and the
+    audit record stores: a resource type followed by a local resource id,
+    separated by a single colon. Publishes the {resource_type}:{local_resource_id}
+    structure decided in basis-architecture and enforced by basis-core's
+    resource-identifier validator. Adapters emit the resource_type and the local
+    resource id as two separate fields; the gateway composes them into this
+    canonical identifier; the kernel consumes the composed identifier and derives
+    the resource type from its prefix. This contract defines the structural shape
+    of a canonical resource identifier only — the resource taxonomy itself
+    remains an open architecture question and is not published here.
+
+resource_identifier:
+  # Human-readable structure. Two colon-separated segments: the resource type
+  # prefix and the local resource id.
+  structure: "{resource_type}:{local_resource_id}"
+  separator: ":"
+  segments_exact: 2
+
+  # Regular expression that validates a full canonical resource identifier.
+  # Anchored; a string is a well-formed canonical resource identifier if and
+  # only if it matches. Exactly two non-empty colon-separated segments.
+  pattern: "^[a-z][a-z0-9_-]*:[a-z0-9][a-z0-9_-]*$"
+
+  # The shape each individual segment must satisfy. The resource_type begins with
+  # a lowercase letter; the local_resource_id begins with a lowercase letter or a
+  # digit. Both then continue with lowercase letters, digits, hyphens, or
+  # underscores. Neither segment may contain a colon, so additional segments are
+  # structurally impossible.
+  resource_type_pattern: "^[a-z][a-z0-9_-]*$"
+  local_resource_id_pattern: "^[a-z0-9][a-z0-9_-]*$"
+
+  segments:
+    - id: resource_type
+      required: true
+      position: 1
+      description: >-
+        The classification of the resource being acted upon (e.g. ahu, setpoint,
+        controller). Non-empty. In the canonical identifier it is the prefix, and
+        the kernel derives the resource type from it. Where applicable, the
+        resource_type aligns with the domain segment of the action string for the
+        same operation, because the gateway fills both from one resource_type
+        field at composition time.
+    - id: local_resource_id
+      required: true
+      position: 2
+      description: >-
+        The specific resource within that type (e.g. rooftop-1, zone-3,
+        boiler-1). Non-empty. Upstream of composition this is an adapter's local,
+        untyped resource id; on its own it is a normalization input, not a
+        canonical identifier.
+
+  constraints:
+    - The string must have exactly two colon-separated segments.
+    - The resource_type (first segment) must be non-empty.
+    - The local_resource_id (second segment) must be non-empty.
+    - An empty segment on either side of the colon is invalid.
+    - A third or further segment is invalid.
+
+  # Where each part of the contract lives in the ecosystem. This contract
+  # publishes the shape; these notes record the boundary ownership decided in
+  # basis-architecture. They are informative, not additional structure.
+  composition:
+    adapters_emit_separately: true   # resource_type and local resource id as two fields
+    composed_by: basis-gateway       # gateway composes "{resource_type}:{local_resource_id}"
+    consumed_by: basis-core          # kernel consumes the canonical resource_id and derives the type from its prefix
+
+  examples:
+    valid:
+      - ahu:rooftop-1
+      - setpoint:zone-3
+      - controller:boiler-1
+    invalid:
+      - rooftop-1            # only one segment; no resource type prefix
+      - "ahu:"               # empty local resource id segment
+      - ":rooftop-1"         # empty resource type segment
+      - "ahu::rooftop-1"     # empty middle segment
+      - ahu:rooftop-1:extra  # three segments; the local resource id may not be subdivided
