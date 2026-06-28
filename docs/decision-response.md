@@ -121,13 +121,15 @@ one-to-one. The response carries no action or resource identifier of its own —
 reports the decision about a request, not the request — so it does not depend on
 the action-string or resource-identifier contracts.
 
-## Relationship to the future audit event
+## Relationship to the audit event
 
-The audit event (a later contract, still a placeholder) records what happened
-around an evaluation and references both the request and the response by their
-shared `request_id`, along with `evaluated_by` and `policy_version`. Publishing
-the response shape first gives that future contract a settled output to reference.
-This contract publishes the response only; it does not anticipate the audit shape.
+The [audit event](audit-event.md) records what happened around an evaluation and
+references both the request and the response by their shared `request_id`, along
+with `evaluated_by` and `policy_version`. The response shape was published before
+the audit event, giving it a settled output to reference. Note that the audit
+event records the decision under its own past-tense outcome vocabulary
+(`allowed` / `denied` / `error`), distinct from this contract's `allow` / `deny` /
+`not_applicable`; this contract publishes the response only.
 
 ## Ownership boundary: who evaluates, returns, and consumes
 

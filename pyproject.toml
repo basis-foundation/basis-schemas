@@ -4,8 +4,8 @@ build-backend = "hatchling.build"
 
 [project]
 name = "basis-schemas"
-version = "0.0.0"
-description = "Published shared contracts for the BASIS ecosystem (Phase 1 foundation; no contracts migrated yet)."
+version = "0.1.0"
+description = "Published shared contracts for the BASIS ecosystem: action vocabulary, action string, resource identifier, decision request/response, and audit event."
 readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "Apache-2.0" }

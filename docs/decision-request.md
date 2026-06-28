@@ -60,15 +60,17 @@ from the authenticated identity at composition time.
 
 ## Examples
 
-A resource-specific request with roles and context:
+A resource-specific request with roles and context (the permitted write that the
+[decision response](decision-response.md) allows and the
+[audit event](audit-event.md) records, correlated by `request_id`):
 
 ```yaml
 request_id: a1b2c3d4-0001-0000-0000-000000000001
-subject_id: alice@example.com
+subject_id: a7b8c9d0-1234-5678-abcd-ef0123456789
 subject_roles:
   - operator
-action: read:ahu
-resource_id: ahu:rooftop-1
+action: write:hvac:setpoint
+resource_id: hvac:zone-a
 context:
   site: west-campus
 timestamp: "2026-05-22T14:30:00Z"
