@@ -175,6 +175,10 @@ ruff format --check .   # formatting check
 mypy src                # type-check the metadata package
 ```
 
+Every pull request and every push to `main` runs these same quality gates
+automatically via GitHub Actions
+([`.github/workflows/ci.yml`](.github/workflows/ci.yml)).
+
 ## Governance and license
 
 Contracts published here are decided in `basis-architecture` and governed under
