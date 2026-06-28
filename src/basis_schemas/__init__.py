@@ -28,7 +28,7 @@ __all__ = [
     "is_phase1_foundation",
 ]
 
-__version__: Final[str] = "0.0.0"
+__version__: Final[str] = "0.1.0"
 
 PROJECT_NAME: Final[str] = "basis-schemas"
 

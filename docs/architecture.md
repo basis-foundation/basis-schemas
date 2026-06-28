@@ -72,8 +72,9 @@ basis-  basis- basis- basis-     basis-
 Concretely, relative to `basis-schemas`:
 
 - **`basis-core`** consumes the decision request/response, action string,
-  resource identifier, and audit event once they migrate. It originated several
-  of these contracts and publishes them today until migration. It depends on
+  resource identifier, and audit event, now published here. It originated several
+  of these contracts and remains their authoritative implementation; the canonical
+  shapes are published here for every component to share. It depends on
   `basis-schemas` only, never sideways on the gateway, adapters, console, or
   deploy.
 - **`basis-gateway`** consumes the action string, resource identifier,
@@ -84,8 +85,9 @@ Concretely, relative to `basis-schemas`:
 - **`basis-adapters`** consumes the normalized request schema and the action
   vocabulary. It depends on `basis-schemas`.
 - **`basis-console`** consumes the normalized request schema, action vocabulary,
-  and decision response. Its provisional vocabulary copy is retired once the
-  shared definition exists. It depends on `basis-schemas` and `basis-gateway`.
+  and decision response. Its provisional vocabulary copy is retired in favor of
+  the shared definition published here. It depends on `basis-schemas` and
+  `basis-gateway`.
 - **`basis-deploy`** consumes the compatibility metadata to assemble mutually
   compatible component versions. Its deployment and topology contracts are out
   of scope here.
@@ -132,11 +134,12 @@ copies — they hold imports of the single published definition.
 
 ## Tooling rationale
 
-This repository uses a lightweight Python toolchain (pytest, ruff, mypy). During
-Phase 1 there are no real schemas to validate, so a minimal `src/basis_schemas`
-package carries repository metadata (name, version, the list of planned
-contracts) and gives the type checker and test suite something real to run. This
-keeps the quality gates meaningful from the first commit without committing the
-repository to a particular schema-validation framework before any schema exists.
-The framework that validates published schemas is chosen when the first contract
-migrates, not now.
+This repository uses a lightweight Python toolchain (pytest, ruff, mypy). The
+published contracts are static YAML files; the tests parse each contract and
+check that its metadata, field policy, and examples are internally consistent and
+faithful to the shape `basis-architecture` decided. A minimal `src/basis_schemas`
+package carries repository metadata (name, version, and the planned-versus-
+published contract lists) so the type checker and test suite have something real
+to run against. This deliberately stops short of a full schema-generation
+framework: the smallest stable toolchain that keeps the quality gates meaningful
+is preferred until a richer validation need actually arises.

@@ -10,6 +10,15 @@ contract versions and lifecycle states follow
 
 ## [Unreleased]
 
+## [0.1.0] - 2026-06-28
+
+First public release of `basis-schemas`. It publishes the six contracts of the
+first planned wave — the action vocabulary, the action string, the resource
+identifier, the decision request, the decision response, and the audit event —
+each at contract version `0.1.0`, lifecycle `experimental`. This is the first
+public release, not a claim that the contract set is closed: future contracts may
+be added through `basis-architecture` governance.
+
 ### Added
 
 - **Audit event contract published** (sixth machine-readable contract; completes
@@ -106,6 +115,15 @@ contract versions and lifecycle states follow
 
 ### Changed
 
+- **Release-readiness pass for v0.1.0.** Set the package version to `0.1.0` and
+  refreshed the package description; removed stale "Phase 1 / foundation
+  skeleton / not yet migrated / once they migrate" wording from
+  `docs/architecture.md`, `CONTRIBUTING.md`, and `pyproject.toml` now that all
+  six contracts are published; aligned the `decision-request` examples with the
+  `decision-response` and `audit-event` examples so a shared `request_id` tells
+  one coherent story (matching `basis-core`'s fixtures); and made the
+  audit-event `schema_version` terminology consistent across the docs. No
+  contract shapes changed.
 - Removed `schemas/audit-event/PLACEHOLDER.md`; the directory now holds the real
   contract. No placeholder directories remain — every planned contract is
   published.

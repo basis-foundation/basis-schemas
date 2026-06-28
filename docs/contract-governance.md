@@ -102,8 +102,8 @@ stable contract:
   must remain interpretable for its full retention period. A new schema version
   must be interpretable against records from prior versions, either through
   defined migration logic or through a stability commitment that makes migration
-  unnecessary. The action-vocabulary version field exists precisely so historical
-  records can be interpreted across vocabulary evolution.
+  unnecessary. The audit event carries its own `schema_version` precisely so
+  historical records can be interpreted as the schema evolves.
 - **Explicit version identity.** Every contract carries a version, and every
   consumer can identify which version it handles. Mismatches must be detectable
   rather than silent. Compatibility between two revisions is **stated, not

@@ -21,13 +21,16 @@ shared shapes, vocabulary, or semantics are designed.
   topology belong to their owning repositories. See
   [`docs/architecture.md`](docs/architecture.md).
 
-## Phase 1 scope
+## Current scope
 
-The repository is currently a foundation skeleton: documentation, tooling, and
-placeholder schema directories only. Contributions in this phase should improve
-the documentation, tooling, or structure — not migrate contracts. Contract
-migration follows the order in [`docs/migration-plan.md`](docs/migration-plan.md)
-and begins only once each contract is decided ready in `basis-architecture`.
+The first planned wave of contracts is published: the action vocabulary, the
+action string, the resource identifier, the decision request, the decision
+response, and the audit event. Contributions today typically improve the
+published contracts' documentation, examples, tests, or tooling. Adding a new
+contract follows the order and rationale in
+[`docs/migration-plan.md`](docs/migration-plan.md) and begins only once the
+contract is decided ready in `basis-architecture` — this repository publishes
+decided contracts, it does not design them.
 
 ## Quality gates
 

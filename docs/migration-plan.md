@@ -99,8 +99,10 @@ establish the repository's conventions:
   namespace is reserved and callers must not write to it. Deferred until the core
   six establish conventions; the gateway's *enforcement* of the rule always stays
   in the gateway.
-- **Compatibility snapshots** — cross-repository validation fixtures. Deferred
-  until there are published contracts to snapshot against.
+- **Compatibility snapshots** — cross-repository validation fixtures. Now that
+  the first contracts are published they have something to snapshot against;
+  building the fixtures is deferred to a later phase as the contracts advance
+  beyond `experimental`.
 - **Schema versioning metadata format** — generalized version/compatibility
   identifiers. Introduced alongside the first contracts rather than ahead of them.
 

@@ -169,21 +169,31 @@ decision_request:
     consumed_by: basis-core      # kernel evaluates the composed request; never sees protocol frames
 
   examples:
+    # These examples are coherent end-to-end with the decision-response and
+    # audit-event contracts: request_id a1b2c3d4-0001 is the permitted write that
+    # decision-response 0001 allows and audit-event 0001 records as 'allowed';
+    # request_id a1b2c3d4-0002 is the refused write that decision-response 0002
+    # denies and audit-event 0002 records as 'denied'. The values mirror
+    # basis-core's decision_request fixtures.
     valid:
+      # Permitted write (correlates with the allow response and audit record).
       - request_id: a1b2c3d4-0001-0000-0000-000000000001
-        subject_id: alice@example.com
+        subject_id: a7b8c9d0-1234-5678-abcd-ef0123456789
         subject_roles:
           - operator
-        action: read:ahu
-        resource_id: ahu:rooftop-1
+        action: write:hvac:setpoint
+        resource_id: hvac:zone-a
         context:
           site: west-campus
         timestamp: "2026-05-22T14:30:00Z"
+      # Refused write (correlates with the deny response and audit record).
       - request_id: a1b2c3d4-0002-0000-0000-000000000002
         subject_id: a7b8c9d0-1234-5678-abcd-ef0123456789
+        subject_roles:
+          - viewer
         action: write:hvac:setpoint
-        resource_id: setpoint:zone-3
-        timestamp: "2026-05-22T14:31:00+00:00"
+        resource_id: hvac:zone-a
+        timestamp: "2026-05-22T14:30:05+00:00"
       # resource-independent request: resource_id omitted.
       - request_id: a1b2c3d4-0003-0000-0000-000000000003
         subject_id: svc-scheduler
