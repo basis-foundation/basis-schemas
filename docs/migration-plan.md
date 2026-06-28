@@ -7,15 +7,16 @@ initial migration candidates decided in `basis-architecture`
 commitment: the actual sequence is confirmed contract by contract as each is
 decided ready in `basis-architecture`.
 
-The **vocabulary**, **action-string**, **resource-identifier**, and
-**decision-request** contracts have been published (see
+The **vocabulary**, **action-string**, **resource-identifier**,
+**decision-request**, and **decision-response** contracts have been published (see
 [`../schemas/vocabulary/vocabulary.yaml`](../schemas/vocabulary/vocabulary.yaml),
 [`../schemas/action-string/action-string.yaml`](../schemas/action-string/action-string.yaml),
 [`../schemas/resource-identifier/resource-identifier.yaml`](../schemas/resource-identifier/resource-identifier.yaml),
+[`../schemas/decision-request/decision-request.yaml`](../schemas/decision-request/decision-request.yaml),
 and
-[`../schemas/decision-request/decision-request.yaml`](../schemas/decision-request/decision-request.yaml)).
-They are the first four machine-readable contracts in `basis-schemas`; the
-remaining contracts below are still placeholders.
+[`../schemas/decision-response/decision-response.yaml`](../schemas/decision-response/decision-response.yaml)).
+They are the first five machine-readable contracts in `basis-schemas`; the
+remaining contract below (the audit event) is still a placeholder.
 
 ---
 
@@ -46,9 +47,12 @@ Contracts migrate in dependency-and-stability order, lowest-risk first:
    which is why it follows once both formats are published. Stable in `basis-core`
    today; expects an already-composed request (canonical action and resource
    identifier), not adapter-local fields.
-5. **Decision response** — the kernel output: outcome, reason, evaluating policy,
-   policy version, optional failure reason, and timestamp. Pairs with the request
-   and is independently stable.
+5. **Decision response** — ✅ **published** (`experimental`). The kernel output:
+   an explicit `outcome` (allow / deny / not_applicable), reason, evaluating
+   policy (`evaluated_by`), policy version, optional failure reason, and
+   timestamp. Echoes the request's `request_id`, so it declares `depends_on:
+   [decision-request]`. Pairs with the request and is independently stable in
+   `basis-core` today.
 6. **Audit event** — the canonical audit structure, including its schema version
    and action-vocabulary version field. Last of this set because it is the
    broadest — it references action, resource, and policy version — and its
@@ -60,8 +64,8 @@ Contracts migrate in dependency-and-stability order, lowest-risk first:
 2. action-string        ✅ published (experimental) (depends on vocabulary)
 3. resource-identifier  ✅ published (experimental) (parallel format)
 4. decision-request     ✅ published (experimental) (composes action-string + resource-identifier)
-5. decision-response    ⬅ next planned (pairs with decision-request)
-6. audit-event          (references action, resource, policy version)
+5. decision-response    ✅ published (experimental) (pairs with decision-request)
+6. audit-event          ⬅ next planned (references action, resource, policy version)
 ```
 
 Each contract is published first as **experimental**, advances to **candidate**

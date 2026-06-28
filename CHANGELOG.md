@@ -12,6 +12,23 @@ contract versions and lifecycle states follow
 
 ### Added
 
+- **Decision response contract published** (fifth machine-readable contract).
+  `schemas/decision-response/decision-response.yaml` publishes the canonical
+  kernel-output shape decided in `basis-architecture`
+  (`docs/architecture/ecosystem-contract-inventory.md`, §3.9) and implemented by
+  `basis-core`'s `DecisionResponse` (`decisions/models.py`,
+  `decision-response.schema.json`). Contract version `0.1.0`, lifecycle
+  `experimental`. It declares `depends_on: [decision-request]`: the response is
+  the kernel output paired with that input and echoes its `request_id`. Required
+  fields are `request_id`, `outcome`, `reason`, `evaluated_by`, and `timestamp`;
+  `policy_version` and `failure_reason` are optional; unknown fields are rejected
+  (`additional_properties: false`). The decision field is named `outcome` (values
+  `allow` / `deny` / `not_applicable`), and `reason` and `evaluated_by` are
+  required for every response — matching `basis-core` exactly. `failure_reason`
+  (`malformed_request` / `policy_error` / `audit_error` / `internal_error`, or
+  null) distinguishes a safe-deny from a normal policy decision. No obligations,
+  advice, confidence scores, or gateway-specific fields were introduced.
+- `docs/decision-response.md` — short companion explaining the published contract.
 - **Decision request contract published** (fourth machine-readable contract).
   `schemas/decision-request/decision-request.yaml` publishes the canonical
   kernel-input shape decided in `basis-architecture`
@@ -68,6 +85,13 @@ contract versions and lifecycle states follow
 
 ### Changed
 
+- Removed `schemas/decision-response/PLACEHOLDER.md`; the directory now holds the
+  real contract. The remaining contract directory (`audit-event`) remains a
+  placeholder.
+- `basis_schemas.PUBLISHED_CONTRACTS` now includes `decision-response` as the
+  fifth published contract; `README.md`, `schemas/README.md`, and
+  `docs/migration-plan.md` updated to reflect it as published rather than next
+  planned, with `audit-event` now the next planned migration.
 - Removed `schemas/decision-request/PLACEHOLDER.md`; the directory now holds the
   real contract. The remaining two contract directories (`decision-response`,
   `audit-event`) remain placeholders.
