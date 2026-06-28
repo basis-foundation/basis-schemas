@@ -1,14 +1,17 @@
 # Schemas
 
 This directory holds the published, machine-readable contracts of the BASIS
-ecosystem. Four contracts are now published — the action **vocabulary** in
+ecosystem. Five contracts are now published — the action **vocabulary** in
 [`vocabulary/vocabulary.yaml`](vocabulary/vocabulary.yaml), the **action
 string** format in [`action-string/action-string.yaml`](action-string/action-string.yaml),
 the **resource identifier** format in
 [`resource-identifier/resource-identifier.yaml`](resource-identifier/resource-identifier.yaml),
-and the **decision request** shape in
-[`decision-request/decision-request.yaml`](decision-request/decision-request.yaml);
-the remaining planned contracts are still **placeholder directories**. The
+the **decision request** shape in
+[`decision-request/decision-request.yaml`](decision-request/decision-request.yaml),
+and the **decision response** shape in
+[`decision-response/decision-response.yaml`](decision-response/decision-response.yaml);
+the remaining planned contract (the audit event) is still a **placeholder
+directory**. The
 contracts, their order, and what is deferred are described in
 [`../docs/migration-plan.md`](../docs/migration-plan.md); the lifecycle states
 referenced below are defined in
@@ -26,7 +29,7 @@ schemas/
 ├── action-string/          {verb}:{domain}[:{object}]            — PUBLISHED (action-string.yaml)
 ├── resource-identifier/    {resource_type}:{local_resource_id}  — PUBLISHED (resource-identifier.yaml)
 ├── decision-request/       kernel input shape                   — PUBLISHED (decision-request.yaml)
-├── decision-response/      kernel output shape                  — placeholder
+├── decision-response/      kernel output shape                  — PUBLISHED (decision-response.yaml)
 └── audit-event/            canonical audit structure            — placeholder
 ```
 

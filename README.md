@@ -11,7 +11,7 @@ authorization in operational technology (OT) environments, governed by the
 Basis Foundation. This repository is the single source of truth for the data
 shapes those components exchange.
 
-> **Status: four contracts published.** The action **vocabulary** — the five
+> **Status: five contracts published.** The action **vocabulary** — the five
 > canonical verbs — is published under
 > [`schemas/vocabulary/vocabulary.yaml`](schemas/vocabulary/vocabulary.yaml),
 > the **action string** format `{verb}:{domain}[:{object}]` under
@@ -19,10 +19,12 @@ shapes those components exchange.
 > the **resource identifier** format `{resource_type}:{local_resource_id}`
 > under
 > [`schemas/resource-identifier/resource-identifier.yaml`](schemas/resource-identifier/resource-identifier.yaml),
-> and the **decision request** — the kernel input shape — under
-> [`schemas/decision-request/decision-request.yaml`](schemas/decision-request/decision-request.yaml).
-> The remaining planned contracts are still placeholder directories. See
-> [`docs/migration-plan.md`](docs/migration-plan.md).
+> the **decision request** — the kernel input shape — under
+> [`schemas/decision-request/decision-request.yaml`](schemas/decision-request/decision-request.yaml),
+> and the **decision response** — the kernel output shape — under
+> [`schemas/decision-response/decision-response.yaml`](schemas/decision-response/decision-response.yaml).
+> The remaining planned contract (the audit event) is still a placeholder
+> directory. See [`docs/migration-plan.md`](docs/migration-plan.md).
 
 ---
 
@@ -75,8 +77,9 @@ in `basis-architecture`, it does not belong here yet.
 ## First contracts
 
 The following contracts migrate in dependency-and-stability order (lowest-risk
-first). The vocabulary, action-string, resource-identifier, and decision-request
-contracts are **published**; the rest are planned and remain placeholders.
+first). The vocabulary, action-string, resource-identifier, decision-request, and
+decision-response contracts are **published**; the audit event is planned and
+remains a placeholder.
 
 1. **Vocabulary** — _published_ (`experimental`). The five canonical action
    verbs (`read`, `write`, `execute`, `browse`, `subscribe`), published as the
@@ -100,8 +103,13 @@ contracts are **published**; the rest are planned and remain placeholders.
    action-string and resource-identifier contracts. See
    [`schemas/decision-request/decision-request.yaml`](schemas/decision-request/decision-request.yaml)
    and [`docs/decision-request.md`](docs/decision-request.md).
-5. **Decision response** — the kernel output: outcome, reason, evaluating
-   policy, policy version, optional failure reason, and timestamp.
+5. **Decision response** — _published_ (`experimental`). The kernel output:
+   `outcome` (allow / deny / not_applicable), reason, evaluating policy
+   (`evaluated_by`), policy version, optional failure reason, and timestamp.
+   Echoes the request's `request_id`, so it declares `depends_on:
+   [decision-request]`. See
+   [`schemas/decision-response/decision-response.yaml`](schemas/decision-response/decision-response.yaml)
+   and [`docs/decision-response.md`](docs/decision-response.md).
 6. **Audit event** — the canonical audit structure, including its schema version
    and the action-vocabulary version field that lets consumers interpret
    historical records across vocabulary evolution.
@@ -127,7 +135,7 @@ basis-schemas/
 │   ├── action-string/             published — action-string.yaml (experimental)
 │   ├── resource-identifier/       published — resource-identifier.yaml (experimental)
 │   ├── decision-request/          published — decision-request.yaml (experimental)
-│   ├── decision-response/         placeholder — not yet migrated
+│   ├── decision-response/         published — decision-response.yaml (experimental)
 │   └── audit-event/               placeholder — not yet migrated
 ├── src/
 │   └── basis_schemas/             minimal package: repository metadata

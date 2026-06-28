@@ -175,14 +175,12 @@ def test_placeholder_removed_from_decision_request_dir() -> None:
 
 
 def test_remaining_future_contracts_still_have_placeholders() -> None:
-    # decision-request is published; every still-deferred contract
-    # (decision-response, audit-event) must remain a placeholder holding only
-    # PLACEHOLDER.md.
+    # decision-request is published; every still-deferred contract must remain a
+    # placeholder holding only PLACEHOLDER.md.
     assert "decision-request" in basis_schemas.PUBLISHED_CONTRACTS
     deferred = [
         c for c in basis_schemas.PLANNED_CONTRACTS if c not in basis_schemas.PUBLISHED_CONTRACTS
     ]
-    assert deferred == ["decision-response", "audit-event"]
     for contract in deferred:
         directory = REPO_ROOT / "schemas" / contract
         entries = sorted(p.name for p in directory.iterdir() if p.is_file())
