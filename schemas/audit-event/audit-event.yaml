@@ -1,0 +1,537 @@
+# BASIS Audit Event — published contract.
+#
+# This file PUBLISHES the canonical audit-record shape decided in
+# basis-architecture (docs/architecture/ecosystem-contract-inventory.md, §3.10)
+# and implemented today by basis-core's AuditEvent
+# (src/basis_core/audit/events.py and schemas/audit-event.schema.json). It does
+# not invent or redesign the shape. Architecture governs; schemas publish;
+# implementations consume.
+#
+# The `lifecycle` is `experimental` because this published contract is new in
+# basis-schemas, not because the audit-event shape is unsettled — it is defined
+# and versioned in basis-core (schema_version 1.1) and in production use. The
+# surrounding audit *pipeline* (storage, retention, signing, export) is out of
+# scope for this contract.
+
+contract:
+  name: audit-event
+  title: BASIS Audit Event
+  version: 0.1.0
+  lifecycle: experimental
+  governed_by: basis-architecture
+  published_by: basis-schemas
+  source: docs/architecture/ecosystem-contract-inventory.md
+  description: >-
+    The canonical record of a security-relevant occurrence — most often an
+    authorization decision, but also policy changes, identity events, emergency
+    overrides, adapter events, and system events. Publishes the audit-record
+    shape decided in basis-architecture and implemented by basis-core's
+    AuditEvent, including its own audit schema_version (1.1). An authorization
+    audit event records the evidence of one evaluation: it correlates to the
+    decision request and response by request_id, and carries the subject,
+    action, resource, outcome, evaluating rule, policy version, matched rules,
+    and an optional per-rule decision trace. This contract defines the audit
+    record *shape* only — never how records are stored, indexed, retained,
+    signed, or exported, all of which remain outside basis-schemas.
+  # The audit event records the evidence of a decision: it correlates to the
+  # decision request and response by request_id and reproduces their subject,
+  # action, resource, and decision fields. Declared here so consumers know the
+  # dependencies. The action and resource_id fields carry values in the
+  # action-string and resource-identifier formats, reached transitively through
+  # the decision contracts; the audit schema itself constrains action only as
+  # non-empty (matching basis-core).
+  depends_on:
+    - decision-request
+    - decision-response
+
+audit_event:
+  # The audit record is a single object. These four fields are required; the
+  # rest are optional with the defaults below. Unknown fields are rejected:
+  # basis-core's JSON Schema sets additionalProperties: false.
+  required:
+    - event_id
+    - event_type
+    - action
+    - timestamp
+  optional:
+    - schema_version
+    - request_id
+    - decision_id
+    - correlation_id
+    - subject_id
+    - subject_name
+    - subject_type
+    - subject_roles
+    - resource_id
+    - resource_type
+    - outcome
+    - reason
+    - evaluated_by
+    - policy_version
+    - matched_rules
+    - trace
+    - detail
+  additional_properties: false
+
+  fields:
+    # — Identification —
+    - id: event_id
+      type: string
+      required: true
+      non_empty: true
+      description: >-
+        Unique identifier for this audit record. UUID v4; basis-core
+        auto-generates one when not supplied. Non-empty.
+    - id: event_type
+      type: string
+      required: true
+      enum:
+        - authorization_decision
+        - policy_change
+        - identity_event
+        - emergency_override
+        - adapter_event
+        - system_event
+      description: >-
+        Category of the event, used for filtering and routing. Most records are
+        authorization_decision; the other categories let non-decision events
+        share the same record shape.
+    - id: timestamp
+      type: string
+      format: date-time
+      required: true
+      description: >-
+        ISO 8601 timestamp of when the event occurred (not when it was written to
+        storage). Must be timezone-aware; basis-core rejects timezone-naive
+        timestamps.
+    - id: schema_version
+      type: string
+      required: false
+      default: "1.1"
+      description: >-
+        The AuditEvent schema revision in effect when the record was written.
+        Consumers use it to determine which fields are available. Current value
+        '1.1'. Fields are added (never removed or renamed) as the version
+        advances, so older records remain interpretable.
+
+    # — Correlation —
+    - id: request_id
+      type:
+        - string
+        - "null"
+      required: false
+      default: null
+      non_empty: true
+      description: >-
+        The decision request's request_id, linking this record to the request
+        and response that produced it. Non-empty when present; null for events
+        not associated with a decision request.
+    - id: decision_id
+      type:
+        - string
+        - "null"
+      required: false
+      default: null
+      non_empty: true
+      description: >-
+        Identifier for the decision itself. Defaults to request_id when not
+        separately assigned; lets systems that mint their own decision ids carry
+        them. Non-empty when present.
+    - id: correlation_id
+      type:
+        - string
+        - "null"
+      required: false
+      default: null
+      description: >-
+        Optional caller-provided trace identifier for cross-system correlation
+        (e.g. an HTTP request id or batch job id), passed through verbatim.
+
+    # — Subject —
+    - id: subject_id
+      type:
+        - string
+        - "null"
+      required: false
+      default: null
+      non_empty: true
+      description: >-
+        Stable identifier of the subject. Non-empty when present; null for system
+        events with no associated principal.
+    - id: subject_name
+      type:
+        - string
+        - "null"
+      required: false
+      default: null
+      description: Human-readable subject label. Null for system events.
+    - id: subject_type
+      type:
+        - string
+        - "null"
+      required: false
+      default: null
+      enum:
+        - human
+        - device
+        - service
+        - gateway
+        - agent
+        - null
+      description: >-
+        The subject's type, from the same population the kernel models. Null for
+        system events.
+    - id: subject_roles
+      type: array
+      item_type: string
+      required: false
+      default: []
+      description: >-
+        Roles held by the subject at the time of the event. Items non-empty;
+        empty for system events or subjects without role assignments.
+
+    # — Resource and action —
+    - id: action
+      type: string
+      required: true
+      non_empty: true
+      description: >-
+        The action recorded, appearing verbatim in stored records. Carries a
+        value in the action-string {verb}:{domain}[:{object}] form, but the audit
+        schema itself constrains it only as non-empty (matching basis-core),
+        because a stored record must remain readable even if the action vocabulary
+        evolves.
+    - id: resource_id
+      type:
+        - string
+        - "null"
+      required: false
+      default: null
+      description: >-
+        The canonical resource identifier acted upon, in the
+        {resource_type}:{local_resource_id} form published by the
+        resource-identifier contract. Null if the event is not resource-specific.
+    - id: resource_type
+      type:
+        - string
+        - "null"
+      required: false
+      default: null
+      description: >-
+        The resource type (e.g. hvac, sensor, device). Null if the event is not
+        resource-specific.
+
+    # — Decision —
+    - id: outcome
+      type:
+        - string
+        - "null"
+      required: false
+      default: null
+      enum:
+        - allowed
+        - denied
+        - error
+        - null
+      description: >-
+        The recorded outcome for authorization_decision events. Null for
+        non-decision event types. NOTE: the audit outcome vocabulary is
+        past-tense and distinct from the decision-response outcome
+        (allow/deny/not_applicable): 'allowed' and 'denied' record permitted and
+        refused decisions, and 'error' records an enforcement-boundary failure
+        (the safe-deny case the decision response carries via failure_reason).
+    - id: reason
+      type:
+        - string
+        - "null"
+      required: false
+      default: null
+      description: >-
+        Human-readable explanation of the outcome. Null for non-decision events.
+    - id: evaluated_by
+      type:
+        - string
+        - "null"
+      required: false
+      default: null
+      description: >-
+        Name of the rule or component that produced the final decision. Null for
+        non-decision events.
+    - id: policy_version
+      type:
+        - string
+        - "null"
+      required: false
+      default: null
+      description: Version of the policy set in effect at evaluation time.
+    - id: matched_rules
+      type: array
+      item_type: string
+      required: false
+      default: []
+      description: >-
+        Names of policy rules that returned allow or deny (not not_applicable)
+        during evaluation. Items non-empty; empty for non-decision events or when
+        no rules matched.
+
+    # — Traceability —
+    - id: trace
+      type:
+        - object
+        - "null"
+      required: false
+      default: null
+      description: >-
+        Optional per-rule evaluation history explaining why the decision was
+        produced. Null when no trace was collected; a record is valid without it.
+        See trace_shape below for its structure.
+
+    # — Miscellaneous —
+    - id: detail
+      type: object
+      required: false
+      default: {}
+      description: >-
+        Arbitrary key/value context specific to this event (command parameters,
+        error information, adapter metadata, and so on). This free-form object —
+        not a fixed metadata schema — is where event-specific evidence lives,
+        including failure details for an 'error' outcome.
+
+  # Enumerated value sets, reproduced here so a consumer can validate a record
+  # without dereferencing the implementation. These mirror basis-core's
+  # AuditEventType, AuditOutcome, and SubjectType enums exactly.
+  event_type_values:
+    - authorization_decision
+    - policy_change
+    - identity_event
+    - emergency_override
+    - adapter_event
+    - system_event
+  outcome_values:
+    - allowed
+    - denied
+    - error
+  subject_type_values:
+    - human
+    - device
+    - service
+    - gateway
+    - agent
+
+  # The optional decision trace sub-shape (basis-core's DecisionTrace). Published
+  # for fidelity; its outcome vocabulary is the kernel's allow/deny/not_applicable
+  # (not the audit past-tense vocabulary), because it records the engine's own
+  # per-rule aggregation.
+  trace_shape:
+    required:
+      - final_outcome
+      - short_circuited
+      - evaluated_rules
+    additional_properties: false
+    final_outcome_values:
+      - allow
+      - deny
+      - not_applicable
+    evaluated_rule:
+      required:
+        - rule_name
+        - outcome
+        - reason
+      additional_properties: false
+      outcome_values:
+        - allow
+        - deny
+        - not_applicable
+
+  # The canonical resource-identifier pattern, reproduced from the
+  # resource-identifier contract so a consumer can validate resource_id without
+  # dereferencing it. This is the canonical (architecture-governed) shape;
+  # basis-core's runtime audit record accepts a permissive superset (see the
+  # companion doc), and where they differ basis-architecture governs.
+  resource_id_pattern: "^[a-z][a-z0-9_-]*:[a-z0-9][a-z0-9_-]*$"
+
+  constraints:
+    - event_id, event_type, action, and timestamp are required.
+    - event_id must be non-empty and action must be non-empty.
+    - event_type must be one of the published event-type values.
+    - timestamp must be timezone-aware.
+    - request_id, decision_id, and subject_id, when present and non-null, must be
+      non-empty.
+    - subject_type, when present and non-null, must be one of the published
+      subject-type values.
+    - outcome, when present and non-null, must be one of the published outcome
+      values (allowed / denied / error) — note this differs from the
+      decision-response outcome vocabulary.
+    - resource_id, when present and non-null, must match the canonical
+      resource-identifier shape.
+    - There is no failure_reason field; an enforcement-boundary failure is
+      recorded as outcome 'error' with failure context in detail. A failure_reason
+      key is therefore an unknown field and is rejected.
+    - Unknown / additional fields are rejected.
+
+  # Where the audit record is produced and consumed. Informative; it records the
+  # boundary ownership decided in basis-architecture, it adds no structure.
+  composition:
+    initiated_by: basis-gateway   # the enforcement boundary initiates the evaluation flow
+    produced_by: basis-core       # the kernel defines the event and produces decision records
+    correlated_by: request_id     # links the record to its decision request and response
+    # storage, indexing, retention, signing, and SIEM export are OUT OF SCOPE for
+    # this contract; it publishes the record shape, not the audit pipeline.
+
+  examples:
+    valid:
+      # Allow: an authorization decision that permitted the action.
+      - event_id: e1000000-0000-0000-0000-000000000001
+        event_type: authorization_decision
+        timestamp: "2026-05-22T14:30:00Z"
+        schema_version: "1.1"
+        request_id: a1b2c3d4-0001-0000-0000-000000000001
+        decision_id: a1b2c3d4-0001-0000-0000-000000000001
+        correlation_id: null
+        subject_id: a7b8c9d0-1234-5678-abcd-ef0123456789
+        subject_name: alice
+        subject_type: human
+        subject_roles:
+          - operator
+        action: write:hvac:setpoint
+        resource_id: hvac:zone-a
+        resource_type: hvac
+        outcome: allowed
+        reason: Subject holds a role permitted for 'write:hvac:setpoint'.
+        evaluated_by: RolePolicyRule
+        policy_version: v1.0.0
+        matched_rules:
+          - RolePolicyRule
+        trace:
+          final_outcome: allow
+          short_circuited: false
+          evaluated_rules:
+            - rule_name: RolePolicyRule
+              outcome: allow
+              reason: Role 'operator' is permitted for 'write:hvac:setpoint'.
+        detail: {}
+      # Deny: an authorization decision that refused the action.
+      - event_id: e1000000-0000-0000-0000-000000000002
+        event_type: authorization_decision
+        timestamp: "2026-05-22T14:30:05Z"
+        request_id: a1b2c3d4-0002-0000-0000-000000000002
+        subject_id: a7b8c9d0-1234-5678-abcd-ef0123456789
+        subject_type: human
+        subject_roles:
+          - viewer
+        action: write:hvac:setpoint
+        resource_id: hvac:zone-a
+        resource_type: hvac
+        outcome: denied
+        reason: Subject role 'viewer' is not permitted to perform 'write:hvac:setpoint'.
+        evaluated_by: RolePolicyRule
+        policy_version: v1.0.0
+        matched_rules:
+          - RolePolicyRule
+        trace:
+          final_outcome: deny
+          short_circuited: true
+          evaluated_rules:
+            - rule_name: RolePolicyRule
+              outcome: deny
+              reason: Role 'viewer' is not permitted to perform 'write:hvac:setpoint'.
+      # Error (safe-deny): the enforcement boundary failed; recorded as 'error'
+      # with failure context in detail (there is no failure_reason field).
+      - event_id: e1000000-0000-0000-0000-000000000003
+        event_type: authorization_decision
+        timestamp: "2026-05-22T14:30:07Z"
+        request_id: a1b2c3d4-0004-0000-0000-000000000004
+        subject_id: a7b8c9d0-1234-5678-abcd-ef0123456789
+        subject_type: human
+        action: write:hvac:setpoint
+        resource_id: hvac:zone-a
+        resource_type: hvac
+        outcome: error
+        reason: Policy evaluation failed due to an internal rule error. Access denied.
+        evaluated_by: PolicyEngine
+        policy_version: v1.0.0
+        detail:
+          failure: policy_error
+      # Non-decision system event: minimal record, no subject or decision fields.
+      - event_id: e1000000-0000-0000-0000-000000000004
+        event_type: system_event
+        timestamp: "2026-05-22T03:00:00Z"
+        action: system:startup
+        detail:
+          component: enforcement-point
+    invalid:
+      - reason: missing required event_id
+        value:
+          event_type: authorization_decision
+          action: write:hvac:setpoint
+          timestamp: "2026-05-22T14:30:00Z"
+      - reason: empty event_id (malformed identifier)
+        value:
+          event_id: ""
+          event_type: authorization_decision
+          action: write:hvac:setpoint
+          timestamp: "2026-05-22T14:30:00Z"
+      - reason: missing required event_type
+        value:
+          event_id: e1000000-0000-0000-0000-000000000010
+          action: write:hvac:setpoint
+          timestamp: "2026-05-22T14:30:00Z"
+      - reason: invalid event_type value
+        value:
+          event_id: e1000000-0000-0000-0000-000000000011
+          event_type: login
+          action: write:hvac:setpoint
+          timestamp: "2026-05-22T14:30:00Z"
+      - reason: missing required action
+        value:
+          event_id: e1000000-0000-0000-0000-000000000012
+          event_type: authorization_decision
+          timestamp: "2026-05-22T14:30:00Z"
+      - reason: missing required timestamp
+        value:
+          event_id: e1000000-0000-0000-0000-000000000013
+          event_type: authorization_decision
+          action: write:hvac:setpoint
+      - reason: invalid outcome value (decision-response vocabulary, not audit vocabulary)
+        value:
+          event_id: e1000000-0000-0000-0000-000000000014
+          event_type: authorization_decision
+          action: write:hvac:setpoint
+          timestamp: "2026-05-22T14:30:00Z"
+          outcome: allow
+      - reason: invalid subject_type value
+        value:
+          event_id: e1000000-0000-0000-0000-000000000015
+          event_type: authorization_decision
+          action: write:hvac:setpoint
+          timestamp: "2026-05-22T14:30:00Z"
+          subject_type: robot
+      - reason: malformed request_id (empty string)
+        value:
+          event_id: e1000000-0000-0000-0000-000000000016
+          event_type: authorization_decision
+          action: write:hvac:setpoint
+          timestamp: "2026-05-22T14:30:00Z"
+          request_id: ""
+      - reason: invalid resource identifier (no type prefix)
+        value:
+          event_id: e1000000-0000-0000-0000-000000000017
+          event_type: authorization_decision
+          action: write:hvac:setpoint
+          timestamp: "2026-05-22T14:30:00Z"
+          resource_id: zone-a
+      - reason: unknown failure_reason field rejected (audit event has no such field)
+        value:
+          event_id: e1000000-0000-0000-0000-000000000018
+          event_type: authorization_decision
+          action: write:hvac:setpoint
+          timestamp: "2026-05-22T14:30:00Z"
+          outcome: denied
+          failure_reason: policy_error
+      - reason: unknown / additional field rejected
+        value:
+          event_id: e1000000-0000-0000-0000-000000000019
+          event_type: authorization_decision
+          action: write:hvac:setpoint
+          timestamp: "2026-05-22T14:30:00Z"
+          signature: deadbeef
