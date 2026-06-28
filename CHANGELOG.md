@@ -12,6 +12,23 @@ contract versions and lifecycle states follow
 
 ### Added
 
+- **Decision request contract published** (fourth machine-readable contract).
+  `schemas/decision-request/decision-request.yaml` publishes the canonical
+  kernel-input shape decided in `basis-architecture`
+  (`docs/architecture/ecosystem-contract-inventory.md`, §3.8) and implemented by
+  `basis-core`'s `DecisionRequest` (`decisions/models.py`,
+  `decision-request.schema.json`). Contract version `0.1.0`, lifecycle
+  `experimental`. It declares `depends_on: [action-string, resource-identifier]`:
+  the request composes the canonical `action` and `resource_id` formats published
+  by those contracts. Required fields are `request_id`, `subject_id`, `action`,
+  and `timestamp`; `subject_roles`, `subject_attrs`, `resource_id`, and `context`
+  are optional; unknown fields are rejected (`additional_properties: false`). The
+  subject is carried as flat fields (`subject_id` / `subject_roles` /
+  `subject_attrs`), matching `basis-core` exactly rather than as a nested object.
+  The contract expects an already-composed request — a composite action such as
+  `read:ahu` and a canonical resource identifier such as `ahu:rooftop-1` — never
+  adapter-local fields such as a bare `resource_type`.
+- `docs/decision-request.md` — short companion explaining the published contract.
 - **Resource identifier contract published** (third machine-readable contract).
   `schemas/resource-identifier/resource-identifier.yaml` publishes the canonical
   typed resource-identifier format `{resource_type}:{local_resource_id}` decided
@@ -51,6 +68,13 @@ contract versions and lifecycle states follow
 
 ### Changed
 
+- Removed `schemas/decision-request/PLACEHOLDER.md`; the directory now holds the
+  real contract. The remaining two contract directories (`decision-response`,
+  `audit-event`) remain placeholders.
+- `basis_schemas.PUBLISHED_CONTRACTS` now includes `decision-request` as the
+  fourth published contract; `README.md`, `schemas/README.md`, and
+  `docs/migration-plan.md` updated to reflect it as published rather than next
+  planned, with `decision-response` now the next planned migration.
 - Removed `schemas/resource-identifier/PLACEHOLDER.md`; the directory now holds
   the real contract. The remaining three contract directories
   (`decision-request`, `decision-response`, `audit-event`) remain placeholders.

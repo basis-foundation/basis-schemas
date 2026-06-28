@@ -1,0 +1,238 @@
+# BASIS Decision Request — published contract.
+#
+# This file PUBLISHES the canonical kernel-input shape decided in
+# basis-architecture (docs/architecture/ecosystem-contract-inventory.md, §3.8)
+# and implemented today by basis-core's DecisionRequest
+# (src/basis_core/decisions/models.py and schemas/decision-request.schema.json).
+# It does not invent or redesign the shape. Architecture governs; schemas
+# publish; implementations consume.
+#
+# The `lifecycle` is `experimental` because this published contract is new in
+# basis-schemas, not because the request shape is unsettled — it is stable and
+# in production use in basis-core.
+
+contract:
+  name: decision-request
+  title: BASIS Decision Request
+  version: 0.1.0
+  lifecycle: experimental
+  governed_by: basis-architecture
+  published_by: basis-schemas
+  source: docs/architecture/ecosystem-contract-inventory.md
+  description: >-
+    The normalized authorization request the policy engine evaluates: a subject,
+    a composite action, an optional canonical resource identifier, and context.
+    Publishes the kernel-input shape decided in basis-architecture and
+    implemented by basis-core's DecisionRequest. The request reaches the kernel
+    only after the gateway has composed the canonical action and resource
+    identifier from the adapter's normalized fields, so this contract expects a
+    composite action (e.g. read:ahu) and a canonical resource identifier (e.g.
+    ahu:rooftop-1), never adapter-local fields such as a bare resource_type or a
+    local resource id. The subject is carried as flat fields (subject_id,
+    subject_roles, subject_attrs), matching basis-core exactly; the rich Subject
+    domain type is a basis-core internal, not part of this request contract. This
+    contract defines the request shape only — never how the request is evaluated,
+    which stays in basis-core.
+  # The action segment's shape is published by the action-string contract and the
+  # resource_id segment's shape by the resource-identifier contract. This
+  # contract composes both into the kernel input; it does not restate the verb
+  # set or the identifier grammar, it depends on them. Declared here so consumers
+  # know the dependencies.
+  depends_on:
+    - action-string
+    - resource-identifier
+
+decision_request:
+  # The kernel input is a single object. These four fields are required; the
+  # rest are optional with the defaults below. Unknown fields are rejected:
+  # basis-core's JSON Schema sets additionalProperties: false.
+  required:
+    - request_id
+    - subject_id
+    - action
+    - timestamp
+  optional:
+    - subject_roles
+    - subject_attrs
+    - resource_id
+    - context
+  additional_properties: false
+
+  # The subject is represented as flat fields, not a nested object. This mirrors
+  # basis-core's DecisionRequest exactly; the gateway fills these from the
+  # authenticated identity (e.g. JWT claims) at composition time.
+  subject_representation: flat
+
+  fields:
+    - id: request_id
+      type: string
+      required: true
+      non_empty: true
+      description: >-
+        Unique identifier for correlation with the decision response and the
+        audit record. UUID v4 recommended. basis-core auto-generates one when a
+        request is constructed without it; on the wire it is required and
+        non-empty.
+    - id: subject_id
+      type: string
+      required: true
+      non_empty: true
+      description: >-
+        Stable identifier of the requesting subject. For human subjects, the JWT
+        sub claim; for devices, the certificate CN or device identifier. The
+        gateway derives it from the authenticated identity; adapters and callers
+        never send a subject of their own choosing. Non-empty.
+    - id: subject_roles
+      type: array
+      item_type: string
+      required: false
+      default: []
+      description: >-
+        Role names held by the subject at request time. Items are non-empty and
+        unique; basis-core normalizes them to a sorted, deduplicated set on
+        construction.
+    - id: subject_attrs
+      type: object
+      value_type: string
+      required: false
+      default: {}
+      description: >-
+        Additional subject attributes for ABAC policy conditions. All keys and
+        values are strings.
+    - id: action
+      type: string
+      required: true
+      non_empty: true
+      governed_by: action-string
+      description: >-
+        The composite action being requested, in the canonical
+        {verb}:{domain}[:{object}] form published by the action-string contract
+        (e.g. read:ahu, write:hvac:setpoint). The gateway composes this from the
+        adapter's bare verb and resource type before the request reaches the
+        kernel; the kernel never receives a bare verb. Non-empty.
+    - id: resource_id
+      type:
+        - string
+        - "null"
+      required: false
+      default: null
+      governed_by: resource-identifier
+      description: >-
+        The canonical typed resource identifier in the
+        {resource_type}:{local_resource_id} form published by the
+        resource-identifier contract (e.g. ahu:rooftop-1). The gateway composes
+        it from the adapter's separate resource_type and local resource id; the
+        kernel derives the resource type from the prefix. Null (or absent) when
+        the request is not resource-specific. Adapter-local fields such as a bare
+        resource_type or an untyped local resource id never appear here.
+    - id: context
+      type: object
+      value_type: string
+      required: false
+      default: {}
+      description: >-
+        Key/value context for policy conditions (e.g. site, maintenance_window).
+        All values are strings.
+    - id: timestamp
+      type: string
+      format: date-time
+      required: true
+      description: >-
+        ISO 8601 timestamp of when the request was constructed. Must be
+        timezone-aware (include an offset, e.g. 2026-05-22T14:30:00Z); basis-core
+        rejects timezone-naive timestamps.
+
+  # Canonical validation patterns for the composed segments, reproduced from the
+  # dependency contracts so a consumer can validate a request without
+  # dereferencing them. These are the canonical (architecture-governed) shapes;
+  # basis-core's runtime validator accepts a permissive superset (see the
+  # companion doc), and where they differ basis-architecture governs.
+  action_pattern: "^[a-z][a-z0-9_-]*:[a-z][a-z0-9_-]*(:[a-z][a-z0-9_-]*)?$"
+  resource_id_pattern: "^[a-z][a-z0-9_-]*:[a-z0-9][a-z0-9_-]*$"
+
+  constraints:
+    - request_id, subject_id, action, and timestamp are required.
+    - request_id and subject_id must be non-empty.
+    - action must be non-empty and match the canonical action-string shape.
+    - resource_id, when present and non-null, must match the canonical
+      resource-identifier shape; null or absent is valid for resource-independent
+      requests.
+    - timestamp must be timezone-aware.
+    - Unknown / additional fields are rejected.
+
+  # Where each part of the request is produced and consumed. Informative; it
+  # records the boundary ownership decided in basis-architecture, it adds no
+  # structure.
+  composition:
+    adapters_normalize: true     # adapters emit a bare verb + separate resource_type and local id
+    composed_by: basis-gateway   # gateway composes canonical action + resource_id and fills the subject
+    consumed_by: basis-core      # kernel evaluates the composed request; never sees protocol frames
+
+  examples:
+    valid:
+      - request_id: a1b2c3d4-0001-0000-0000-000000000001
+        subject_id: alice@example.com
+        subject_roles:
+          - operator
+        action: read:ahu
+        resource_id: ahu:rooftop-1
+        context:
+          site: west-campus
+        timestamp: "2026-05-22T14:30:00Z"
+      - request_id: a1b2c3d4-0002-0000-0000-000000000002
+        subject_id: a7b8c9d0-1234-5678-abcd-ef0123456789
+        action: write:hvac:setpoint
+        resource_id: setpoint:zone-3
+        timestamp: "2026-05-22T14:31:00+00:00"
+      # resource-independent request: resource_id omitted.
+      - request_id: a1b2c3d4-0003-0000-0000-000000000003
+        subject_id: svc-scheduler
+        action: browse:ahu
+        timestamp: "2026-05-22T14:32:00Z"
+    invalid:
+      - reason: missing required subject_id
+        value:
+          request_id: a1b2c3d4-1001-0000-0000-000000000001
+          action: read:ahu
+          timestamp: "2026-05-22T14:30:00Z"
+      - reason: empty subject_id (malformed subject)
+        value:
+          request_id: a1b2c3d4-1002-0000-0000-000000000002
+          subject_id: ""
+          action: read:ahu
+          timestamp: "2026-05-22T14:30:00Z"
+      - reason: missing required action
+        value:
+          request_id: a1b2c3d4-1003-0000-0000-000000000003
+          subject_id: alice@example.com
+          timestamp: "2026-05-22T14:30:00Z"
+      - reason: invalid action string (single segment; no domain)
+        value:
+          request_id: a1b2c3d4-1004-0000-0000-000000000004
+          subject_id: alice@example.com
+          action: read
+          timestamp: "2026-05-22T14:30:00Z"
+      - reason: invalid resource identifier (no type prefix)
+        value:
+          request_id: a1b2c3d4-1005-0000-0000-000000000005
+          subject_id: alice@example.com
+          action: read:ahu
+          resource_id: rooftop-1
+          timestamp: "2026-05-22T14:30:00Z"
+      - reason: missing required request_id
+        value:
+          subject_id: alice@example.com
+          action: read:ahu
+          timestamp: "2026-05-22T14:30:00Z"
+      - reason: missing required timestamp
+        value:
+          request_id: a1b2c3d4-1007-0000-0000-000000000007
+          subject_id: alice@example.com
+          action: read:ahu
+      - reason: unknown / additional field rejected
+        value:
+          request_id: a1b2c3d4-1008-0000-0000-000000000008
+          subject_id: alice@example.com
+          action: read:ahu
+          timestamp: "2026-05-22T14:30:00Z"
+          resource_type: ahu
