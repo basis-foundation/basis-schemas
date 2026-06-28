@@ -11,8 +11,8 @@ authorization in operational technology (OT) environments, governed by the
 Basis Foundation. This repository is the single source of truth for the data
 shapes those components exchange.
 
-> **Status: five contracts published.** The action **vocabulary** — the five
-> canonical verbs — is published under
+> **Status: all six planned contracts published.** The action **vocabulary** —
+> the five canonical verbs — is published under
 > [`schemas/vocabulary/vocabulary.yaml`](schemas/vocabulary/vocabulary.yaml),
 > the **action string** format `{verb}:{domain}[:{object}]` under
 > [`schemas/action-string/action-string.yaml`](schemas/action-string/action-string.yaml),
@@ -21,10 +21,13 @@ shapes those components exchange.
 > [`schemas/resource-identifier/resource-identifier.yaml`](schemas/resource-identifier/resource-identifier.yaml),
 > the **decision request** — the kernel input shape — under
 > [`schemas/decision-request/decision-request.yaml`](schemas/decision-request/decision-request.yaml),
-> and the **decision response** — the kernel output shape — under
-> [`schemas/decision-response/decision-response.yaml`](schemas/decision-response/decision-response.yaml).
-> The remaining planned contract (the audit event) is still a placeholder
-> directory. See [`docs/migration-plan.md`](docs/migration-plan.md).
+> the **decision response** — the kernel output shape — under
+> [`schemas/decision-response/decision-response.yaml`](schemas/decision-response/decision-response.yaml),
+> and the **audit event** — the canonical audit record shape — under
+> [`schemas/audit-event/audit-event.yaml`](schemas/audit-event/audit-event.yaml).
+> This completes the first planned migration wave; it is not a claim that the
+> contract set is closed forever — future contracts may still be added through
+> `basis-architecture` governance. See [`docs/migration-plan.md`](docs/migration-plan.md).
 
 ---
 
@@ -77,9 +80,8 @@ in `basis-architecture`, it does not belong here yet.
 ## First contracts
 
 The following contracts migrate in dependency-and-stability order (lowest-risk
-first). The vocabulary, action-string, resource-identifier, decision-request, and
-decision-response contracts are **published**; the audit event is planned and
-remains a placeholder.
+first). All six are now **published** — this completes the first planned wave.
+Future contracts may still be added later through `basis-architecture` governance.
 
 1. **Vocabulary** — _published_ (`experimental`). The five canonical action
    verbs (`read`, `write`, `execute`, `browse`, `subscribe`), published as the
@@ -110,9 +112,15 @@ remains a placeholder.
    [decision-request]`. See
    [`schemas/decision-response/decision-response.yaml`](schemas/decision-response/decision-response.yaml)
    and [`docs/decision-response.md`](docs/decision-response.md).
-6. **Audit event** — the canonical audit structure, including its schema version
-   and the action-vocabulary version field that lets consumers interpret
-   historical records across vocabulary evolution.
+6. **Audit event** — _published_ (`experimental`). The canonical audit record:
+   `event_id`, `event_type`, `action`, and `timestamp` required, plus correlation
+   ids, subject context, resource, decision evidence (`outcome` as
+   `allowed` / `denied` / `error`), an optional per-rule `trace`, free-form
+   `detail`, and its own audit `schema_version` (`1.1`) that lets consumers tell
+   which fields a record carries. Records the evidence of an evaluation, so it
+   declares `depends_on: [decision-request, decision-response]`. See
+   [`schemas/audit-event/audit-event.yaml`](schemas/audit-event/audit-event.yaml)
+   and [`docs/audit-event.md`](docs/audit-event.md).
 
 More complex contracts (the normalized request shape, the reserved
 `basis_gateway.*` namespace rule, and compatibility snapshots) are deferred to a
@@ -136,7 +144,7 @@ basis-schemas/
 │   ├── resource-identifier/       published — resource-identifier.yaml (experimental)
 │   ├── decision-request/          published — decision-request.yaml (experimental)
 │   ├── decision-response/         published — decision-response.yaml (experimental)
-│   └── audit-event/               placeholder — not yet migrated
+│   └── audit-event/               published — audit-event.yaml (experimental)
 ├── src/
 │   └── basis_schemas/             minimal package: repository metadata
 ├── tests/                         lightweight metadata and docs checks

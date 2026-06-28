@@ -7,16 +7,19 @@ initial migration candidates decided in `basis-architecture`
 commitment: the actual sequence is confirmed contract by contract as each is
 decided ready in `basis-architecture`.
 
-The **vocabulary**, **action-string**, **resource-identifier**,
-**decision-request**, and **decision-response** contracts have been published (see
+All six contracts of the first planned wave — **vocabulary**, **action-string**,
+**resource-identifier**, **decision-request**, **decision-response**, and
+**audit-event** — have now been published (see
 [`../schemas/vocabulary/vocabulary.yaml`](../schemas/vocabulary/vocabulary.yaml),
 [`../schemas/action-string/action-string.yaml`](../schemas/action-string/action-string.yaml),
 [`../schemas/resource-identifier/resource-identifier.yaml`](../schemas/resource-identifier/resource-identifier.yaml),
 [`../schemas/decision-request/decision-request.yaml`](../schemas/decision-request/decision-request.yaml),
+[`../schemas/decision-response/decision-response.yaml`](../schemas/decision-response/decision-response.yaml),
 and
-[`../schemas/decision-response/decision-response.yaml`](../schemas/decision-response/decision-response.yaml)).
-They are the first five machine-readable contracts in `basis-schemas`; the
-remaining contract below (the audit event) is still a placeholder.
+[`../schemas/audit-event/audit-event.yaml`](../schemas/audit-event/audit-event.yaml)).
+No placeholders remain. This completes the first planned migration wave; it does
+not close the contract set — the deferred contracts below, and any future shapes
+`basis-architecture` decides, may graduate into later waves.
 
 ---
 
@@ -53,11 +56,17 @@ Contracts migrate in dependency-and-stability order, lowest-risk first:
    timestamp. Echoes the request's `request_id`, so it declares `depends_on:
    [decision-request]`. Pairs with the request and is independently stable in
    `basis-core` today.
-6. **Audit event** — the canonical audit structure, including its schema version
-   and action-vocabulary version field. Last of this set because it is the
-   broadest — it references action, resource, and policy version — and its
-   surrounding pipeline is still emerging. Migrating the *shape* is safe, but it
-   benefits from the earlier contracts being settled first.
+6. **Audit event** — ✅ **published** (`experimental`). The canonical audit
+   record, including its own audit `schema_version` (`1.1`). Last of this set
+   because it is the broadest — it records the request and response evidence
+   (subject, action, resource, outcome, evaluating rule, policy version, matched
+   rules, optional trace) and correlates by `request_id`, so it declares
+   `depends_on: [decision-request, decision-response]`. Its surrounding pipeline
+   (storage, retention, signing, export) is still emerging and is deliberately
+   out of scope — this publishes the record *shape* only. Its `outcome` uses the
+   audit vocabulary (`allowed` / `denied` / `error`), distinct from the decision
+   response's, and it has no `failure_reason` field (a failure is recorded as
+   `outcome: error` with context in `detail`).
 
 ```text
 1. vocabulary           ✅ published (experimental)
@@ -65,8 +74,11 @@ Contracts migrate in dependency-and-stability order, lowest-risk first:
 3. resource-identifier  ✅ published (experimental) (parallel format)
 4. decision-request     ✅ published (experimental) (composes action-string + resource-identifier)
 5. decision-response    ✅ published (experimental) (pairs with decision-request)
-6. audit-event          ⬅ next planned (references action, resource, policy version)
+6. audit-event          ✅ published (experimental) (records request + response evidence)
 ```
+
+All six first-wave contracts are published. The deferred contracts below remain
+for a later wave; future shapes may also graduate as `basis-architecture` decides.
 
 Each contract is published first as **experimental**, advances to **candidate**
 once exercised by real consumers, and becomes **stable** only when

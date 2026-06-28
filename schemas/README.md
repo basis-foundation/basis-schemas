@@ -1,18 +1,22 @@
 # Schemas
 
 This directory holds the published, machine-readable contracts of the BASIS
-ecosystem. Five contracts are now published — the action **vocabulary** in
+ecosystem. All six contracts of the first planned wave are now published — the
+action **vocabulary** in
 [`vocabulary/vocabulary.yaml`](vocabulary/vocabulary.yaml), the **action
 string** format in [`action-string/action-string.yaml`](action-string/action-string.yaml),
 the **resource identifier** format in
 [`resource-identifier/resource-identifier.yaml`](resource-identifier/resource-identifier.yaml),
 the **decision request** shape in
 [`decision-request/decision-request.yaml`](decision-request/decision-request.yaml),
-and the **decision response** shape in
-[`decision-response/decision-response.yaml`](decision-response/decision-response.yaml);
-the remaining planned contract (the audit event) is still a **placeholder
-directory**. The
-contracts, their order, and what is deferred are described in
+the **decision response** shape in
+[`decision-response/decision-response.yaml`](decision-response/decision-response.yaml),
+and the **audit event** shape in
+[`audit-event/audit-event.yaml`](audit-event/audit-event.yaml). No placeholder
+directories remain. This completes the first planned wave; it does not close the
+contract set — future contracts may be added through `basis-architecture`
+governance. The contracts, their order, and what is deferred to a later wave are
+described in
 [`../docs/migration-plan.md`](../docs/migration-plan.md); the lifecycle states
 referenced below are defined in
 [`../docs/contract-governance.md`](../docs/contract-governance.md).
@@ -30,14 +34,16 @@ schemas/
 ├── resource-identifier/    {resource_type}:{local_resource_id}  — PUBLISHED (resource-identifier.yaml)
 ├── decision-request/       kernel input shape                   — PUBLISHED (decision-request.yaml)
 ├── decision-response/      kernel output shape                  — PUBLISHED (decision-response.yaml)
-└── audit-event/            canonical audit structure            — placeholder
+└── audit-event/            canonical audit record shape         — PUBLISHED (audit-event.yaml)
 ```
 
-A placeholder directory holds only a `PLACEHOLDER.md` describing the contract it
-will eventually publish. When a contract migrates, its directory gains the actual
-schema definition with embedded version and lifecycle metadata, and (later) a
-changelog and compatibility fixtures. The vocabulary contract migrated first and
-fixes the conventions the rest follow.
+Every directory above now holds a real schema definition; no `PLACEHOLDER.md`
+files remain. When a future contract is added, it follows the same pattern: a
+directory is created (briefly holding a `PLACEHOLDER.md` describing the contract
+it will publish), and on migration it gains the actual schema definition with
+embedded version and lifecycle metadata, and (later) a changelog and
+compatibility fixtures. The vocabulary contract migrated first and fixes the
+conventions the rest follow.
 
 ## Metadata pattern (the expected shape for every contract)
 

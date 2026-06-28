@@ -41,20 +41,29 @@ def test_contract_states_are_ordered_by_commitment() -> None:
 
 
 def test_published_contracts_is_a_subset_in_planned_order() -> None:
-    # The first five contracts — vocabulary, action-string, resource-identifier,
-    # decision-request, and decision-response — are published; the rest remain
-    # planned. Published contracts must be a prefix of the planned order
-    # (migration proceeds in order, lowest-risk first).
+    # All six planned contracts — vocabulary, action-string, resource-identifier,
+    # decision-request, decision-response, and audit-event — are now published.
+    # Published contracts must be a prefix of the planned order (migration
+    # proceeds in order, lowest-risk first); with the wave complete, that prefix
+    # is the whole planned list.
     assert basis_schemas.PUBLISHED_CONTRACTS == (
         "vocabulary",
         "action-string",
         "resource-identifier",
         "decision-request",
         "decision-response",
+        "audit-event",
     )
     published = basis_schemas.PUBLISHED_CONTRACTS
     planned_prefix = basis_schemas.PLANNED_CONTRACTS[: len(published)]
     assert published == planned_prefix
+
+
+def test_all_planned_contracts_are_published() -> None:
+    # Every currently planned contract is published. This is not a claim that the
+    # contract set is closed forever — future contracts may be added through
+    # basis-architecture governance and would extend PLANNED_CONTRACTS.
+    assert set(basis_schemas.PUBLISHED_CONTRACTS) == set(basis_schemas.PLANNED_CONTRACTS)
 
 
 def test_repository_is_past_phase1_foundation() -> None:

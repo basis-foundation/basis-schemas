@@ -12,6 +12,27 @@ contract versions and lifecycle states follow
 
 ### Added
 
+- **Audit event contract published** (sixth machine-readable contract; completes
+  the first planned wave). `schemas/audit-event/audit-event.yaml` publishes the
+  canonical audit-record shape decided in `basis-architecture`
+  (`docs/architecture/ecosystem-contract-inventory.md`, §3.10) and implemented by
+  `basis-core`'s `AuditEvent` (`audit/events.py`, `audit-event.schema.json`).
+  Contract version `0.1.0`, lifecycle `experimental`. It declares `depends_on:
+  [decision-request, decision-response]`: an audit record holds the evidence of an
+  evaluation and correlates to both by `request_id`. Required fields are
+  `event_id`, `event_type`, `action`, and `timestamp`; all other fields
+  (correlation ids, subject context, resource, decision evidence, per-rule
+  `trace`, free-form `detail`, and the audit `schema_version` `1.1`) are optional;
+  unknown fields are rejected (`additional_properties: false`). Published exactly
+  as basis-core defines it, including two points where the shape differs from a
+  generic expectation: the `outcome` vocabulary is past-tense (`allowed` /
+  `denied` / `error`), distinct from the decision response's `allow` / `deny` /
+  `not_applicable`; and there is no `failure_reason` field — an
+  enforcement-boundary failure is recorded as `outcome: error` with context in
+  `detail`. No storage, retention, signing, indexing, SIEM-export, trace/OTel,
+  cryptographic-signature, compliance-mapping, or AI-metadata fields or behavior
+  were introduced; this publishes the record shape, not an audit pipeline.
+- `docs/audit-event.md` — short companion explaining the published contract.
 - **Decision response contract published** (fifth machine-readable contract).
   `schemas/decision-response/decision-response.yaml` publishes the canonical
   kernel-output shape decided in `basis-architecture`
@@ -85,6 +106,15 @@ contract versions and lifecycle states follow
 
 ### Changed
 
+- Removed `schemas/audit-event/PLACEHOLDER.md`; the directory now holds the real
+  contract. No placeholder directories remain — every planned contract is
+  published.
+- `basis_schemas.PUBLISHED_CONTRACTS` now includes `audit-event` as the sixth
+  published contract, making it equal to `PLANNED_CONTRACTS`; `README.md`,
+  `schemas/README.md`, and `docs/migration-plan.md` updated to reflect the first
+  planned wave as complete. Wording is deliberately "all currently planned
+  contracts are published," not that the contract set is closed — future
+  contracts may still be added through `basis-architecture` governance.
 - Removed `schemas/decision-response/PLACEHOLDER.md`; the directory now holds the
   real contract. The remaining contract directory (`audit-event`) remains a
   placeholder.
