@@ -2,10 +2,10 @@
 
 This package carries repository metadata: the package name, version, the ordered
 list of contracts planned for migration, and which of them have been published.
-The first three contracts — the action **vocabulary**, the **action string**,
-and the **resource identifier** — are now published under ``schemas/``; the
-remaining planned contracts are still placeholders. The metadata gives the test
-suite and type checker something real to run.
+The first four contracts — the action **vocabulary**, the **action string**, the
+**resource identifier**, and the **decision request** — are now published under
+``schemas/``; the remaining planned contracts are still placeholders. The
+metadata gives the test suite and type checker something real to run.
 
 This package does **not** define, validate, or implement any contract. Contracts
 are decided in ``basis-architecture`` and published, once migrated, under the
@@ -43,12 +43,13 @@ PLANNED_CONTRACTS: Final[tuple[str, ...]] = (
 
 #: Contracts that have actually been published under ``schemas/`` (a real
 #: machine-readable definition, not a placeholder). Vocabulary was first,
-#: action-string second, resource-identifier third; the rest of
-#: ``PLANNED_CONTRACTS`` remain placeholders.
+#: action-string second, resource-identifier third, decision-request fourth; the
+#: rest of ``PLANNED_CONTRACTS`` remain placeholders.
 PUBLISHED_CONTRACTS: Final[tuple[str, ...]] = (
     "vocabulary",
     "action-string",
     "resource-identifier",
+    "decision-request",
 )
 
 #: The lifecycle states a published contract may carry, lowest to highest

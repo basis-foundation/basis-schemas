@@ -7,13 +7,14 @@ initial migration candidates decided in `basis-architecture`
 commitment: the actual sequence is confirmed contract by contract as each is
 decided ready in `basis-architecture`.
 
-The **vocabulary**, **action-string**, and **resource-identifier** contracts have
-been published (see
+The **vocabulary**, **action-string**, **resource-identifier**, and
+**decision-request** contracts have been published (see
 [`../schemas/vocabulary/vocabulary.yaml`](../schemas/vocabulary/vocabulary.yaml),
 [`../schemas/action-string/action-string.yaml`](../schemas/action-string/action-string.yaml),
+[`../schemas/resource-identifier/resource-identifier.yaml`](../schemas/resource-identifier/resource-identifier.yaml),
 and
-[`../schemas/resource-identifier/resource-identifier.yaml`](../schemas/resource-identifier/resource-identifier.yaml)).
-They are the first three machine-readable contracts in `basis-schemas`; the
+[`../schemas/decision-request/decision-request.yaml`](../schemas/decision-request/decision-request.yaml)).
+They are the first four machine-readable contracts in `basis-schemas`; the
 remaining contracts below are still placeholders.
 
 ---
@@ -38,9 +39,13 @@ Contracts migrate in dependency-and-stability order, lowest-risk first:
    canonical identifier shapes. Adapters emit the resource type and local resource
    id separately; the gateway composes them; the kernel consumes the composed
    identifier and derives the type from its prefix.
-4. **Decision request** — the kernel input: subject, composite action, optional
-   canonical resource identifier, and context. Composes the action string and
-   resource identifier, so it can only follow once both formats are published.
+4. **Decision request** — ✅ **published** (`experimental`). The kernel input:
+   subject (carried as flat `subject_id` / `subject_roles` / `subject_attrs`
+   fields, matching `basis-core`), composite action, optional canonical resource
+   identifier, and context. Composes the action string and resource identifier,
+   which is why it follows once both formats are published. Stable in `basis-core`
+   today; expects an already-composed request (canonical action and resource
+   identifier), not adapter-local fields.
 5. **Decision response** — the kernel output: outcome, reason, evaluating policy,
    policy version, optional failure reason, and timestamp. Pairs with the request
    and is independently stable.
@@ -54,8 +59,8 @@ Contracts migrate in dependency-and-stability order, lowest-risk first:
 1. vocabulary           ✅ published (experimental)
 2. action-string        ✅ published (experimental) (depends on vocabulary)
 3. resource-identifier  ✅ published (experimental) (parallel format)
-4. decision-request     ⬅ next planned (composes action-string + resource-identifier)
-5. decision-response    (pairs with decision-request)
+4. decision-request     ✅ published (experimental) (composes action-string + resource-identifier)
+5. decision-response    ⬅ next planned (pairs with decision-request)
 6. audit-event          (references action, resource, policy version)
 ```
 

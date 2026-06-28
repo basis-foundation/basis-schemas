@@ -1,11 +1,13 @@
 # Schemas
 
 This directory holds the published, machine-readable contracts of the BASIS
-ecosystem. Three contracts are now published — the action **vocabulary** in
+ecosystem. Four contracts are now published — the action **vocabulary** in
 [`vocabulary/vocabulary.yaml`](vocabulary/vocabulary.yaml), the **action
 string** format in [`action-string/action-string.yaml`](action-string/action-string.yaml),
-and the **resource identifier** format in
-[`resource-identifier/resource-identifier.yaml`](resource-identifier/resource-identifier.yaml);
+the **resource identifier** format in
+[`resource-identifier/resource-identifier.yaml`](resource-identifier/resource-identifier.yaml),
+and the **decision request** shape in
+[`decision-request/decision-request.yaml`](decision-request/decision-request.yaml);
 the remaining planned contracts are still **placeholder directories**. The
 contracts, their order, and what is deferred are described in
 [`../docs/migration-plan.md`](../docs/migration-plan.md); the lifecycle states
@@ -23,7 +25,7 @@ schemas/
 ├── vocabulary/             the five canonical action verbs       — PUBLISHED (vocabulary.yaml)
 ├── action-string/          {verb}:{domain}[:{object}]            — PUBLISHED (action-string.yaml)
 ├── resource-identifier/    {resource_type}:{local_resource_id}  — PUBLISHED (resource-identifier.yaml)
-├── decision-request/       kernel input shape                   — placeholder
+├── decision-request/       kernel input shape                   — PUBLISHED (decision-request.yaml)
 ├── decision-response/      kernel output shape                  — placeholder
 └── audit-event/            canonical audit structure            — placeholder
 ```
