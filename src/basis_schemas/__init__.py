@@ -10,6 +10,14 @@ the contract set is closed forever — future contracts may still be added throu
 ``basis-architecture`` governance. The metadata gives the test suite and type
 checker something real to run.
 
+A second, separate wave has since begun: the shared metadata and vocabulary
+contracts from ``basis-architecture``'s operation-aware schema readiness plan
+(ADR-0005) — ``contract-metadata``, ``redaction-classification``, and
+``reason-code``. These are tracked in ``OPERATION_AWARE_SHARED_METADATA_CONTRACTS``
+below, deliberately kept separate from ``PLANNED_CONTRACTS`` /
+``PUBLISHED_CONTRACTS``, which continue to track only the original six-contract
+first wave. See ``docs/operation-aware-schema-readiness.md``.
+
 This package does **not** define, validate, or implement any contract. Contracts
 are decided in ``basis-architecture`` and published, once migrated, under the
 ``schemas/`` directory.
@@ -25,6 +33,7 @@ __all__ = [
     "PLANNED_CONTRACTS",
     "PUBLISHED_CONTRACTS",
     "CONTRACT_STATES",
+    "OPERATION_AWARE_SHARED_METADATA_CONTRACTS",
     "is_phase1_foundation",
 ]
 
@@ -65,6 +74,20 @@ CONTRACT_STATES: Final[tuple[str, ...]] = (
     "experimental",
     "candidate",
     "stable",
+)
+
+#: Shared metadata/vocabulary contracts published by PR A of the
+#: operation-aware schema readiness plan (``basis-architecture`` ADR-0005,
+#: "PR A — Shared Metadata and Vocabulary"). These are foundational building
+#: blocks for later operation-aware contracts (PR B onward); they are a
+#: second, separate wave and do not extend ``PLANNED_CONTRACTS`` /
+#: ``PUBLISHED_CONTRACTS`` above, which track only the original six-contract
+#: migration wave from ``docs/migration-plan.md``. See
+#: ``docs/operation-aware-schema-readiness.md``.
+OPERATION_AWARE_SHARED_METADATA_CONTRACTS: Final[tuple[str, ...]] = (
+    "contract-metadata",
+    "redaction-classification",
+    "reason-code",
 )
 
 

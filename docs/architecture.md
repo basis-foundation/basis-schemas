@@ -132,6 +132,18 @@ ecosystem-wide blast radius under the compatibility rules in
 change a contract by changing its own copy, because consumers no longer hold
 copies — they hold imports of the single published definition.
 
+## The operation-aware expansion
+
+The ownership model above is not limited to the six first-wave contracts. As
+`basis-architecture`'s operation-aware schema readiness plan (ADR-0005,
+`docs/architecture/operation-aware-schema-readiness-plan.md`) publishes further
+contracts here — starting with the shared metadata and vocabulary contracts in
+[`operation-aware-schema-readiness.md`](operation-aware-schema-readiness.md) —
+the same boundaries apply unchanged: `basis-architecture` decides the shape,
+`basis-schemas` publishes it, and implementations consume it. No new ownership
+model is introduced for the operation-aware contracts; they are additive
+publications under the model already described above.
+
 ## Tooling rationale
 
 This repository uses a lightweight Python toolchain (pytest, ruff, mypy). The

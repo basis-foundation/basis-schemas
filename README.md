@@ -28,6 +28,11 @@ shapes those components exchange.
 > This completes the first planned migration wave; it is not a claim that the
 > contract set is closed forever — future contracts may still be added through
 > `basis-architecture` governance. See [`docs/migration-plan.md`](docs/migration-plan.md).
+> A second wave has since begun: **contract metadata**, **redaction
+> classification**, and **reason code** — the shared foundation contracts from
+> `basis-architecture`'s operation-aware schema readiness plan (ADR-0005) — are
+> now published. See
+> [`docs/operation-aware-schema-readiness.md`](docs/operation-aware-schema-readiness.md).
 
 ---
 
@@ -126,6 +131,36 @@ More complex contracts (the normalized request shape, the reserved
 `basis_gateway.*` namespace rule, and compatibility snapshots) are deferred to a
 later phase. See [`docs/migration-plan.md`](docs/migration-plan.md).
 
+## Second wave: operation-aware shared metadata
+
+`basis-architecture`'s operation-aware schema readiness plan (ADR-0005) defines
+a further, ordered sequence of contracts beyond the six above, needed for the
+richer operation-aware `DecisionRequest`/`DecisionResponse`, policy bundle, and
+trace/audit evidence work. Its first PR — **shared metadata and vocabulary** —
+is now published:
+
+- **Contract metadata** — _published_ (`experimental`). Formalizes the
+  `contract:` block every contract above already carries (identifier, version,
+  lifecycle, governance) as its own reusable contract. See
+  [`schemas/contract-metadata/contract-metadata.yaml`](schemas/contract-metadata/contract-metadata.yaml)
+  and [`docs/contract-metadata.md`](docs/contract-metadata.md).
+- **Redaction classification** — _published_ (`experimental`). The five-value
+  vocabulary (`safe_to_expose`, `safe_after_redaction`, `reference_only`,
+  `never_store`, `never_display`) evidence is sorted into before it may appear
+  in a trace, audit, or explanation artifact. See
+  [`schemas/redaction-classification/redaction-classification.yaml`](schemas/redaction-classification/redaction-classification.yaml)
+  and [`docs/redaction-classification.md`](docs/redaction-classification.md).
+- **Reason code** — _published_ (`experimental`). The lowercase snake_case
+  string format a reason code must satisfy — deliberately not a closed enum, so
+  the final vocabulary stays deferred to the contracts that carry it. See
+  [`schemas/reason-code/reason-code.yaml`](schemas/reason-code/reason-code.yaml)
+  and [`docs/reason-code.md`](docs/reason-code.md).
+
+These three are additive and separate from the six-contract first wave above;
+they do not extend or alter it. See
+[`docs/operation-aware-schema-readiness.md`](docs/operation-aware-schema-readiness.md)
+for the full second-wave plan and status.
+
 ---
 
 ## Repository layout
@@ -136,7 +171,8 @@ basis-schemas/
 ├── docs/
 │   ├── architecture.md            role in the ecosystem and dependency boundaries
 │   ├── contract-governance.md     contract states, compatibility, breaking changes
-│   └── migration-plan.md          migration order and what is deferred
+│   ├── migration-plan.md          first-wave migration order and what is deferred
+│   └── operation-aware-schema-readiness.md   second-wave (ADR-0005) plan and status
 ├── schemas/
 │   ├── README.md                  directory structure and schema lifecycle
 │   ├── vocabulary/                published — vocabulary.yaml (experimental)
@@ -144,7 +180,10 @@ basis-schemas/
 │   ├── resource-identifier/       published — resource-identifier.yaml (experimental)
 │   ├── decision-request/          published — decision-request.yaml (experimental)
 │   ├── decision-response/         published — decision-response.yaml (experimental)
-│   └── audit-event/               published — audit-event.yaml (experimental)
+│   ├── audit-event/               published — audit-event.yaml (experimental)
+│   ├── contract-metadata/         published — contract-metadata.yaml (experimental)
+│   ├── redaction-classification/  published — redaction-classification.yaml (experimental)
+│   └── reason-code/               published — reason-code.yaml (experimental)
 ├── src/
 │   └── basis_schemas/             minimal package: repository metadata
 ├── tests/                         lightweight metadata and docs checks
@@ -158,8 +197,10 @@ basis-schemas/
 - [`docs/contract-governance.md`](docs/contract-governance.md) — stable,
   candidate, and experimental contract states; compatibility expectations; and
   the breaking-change process.
-- [`docs/migration-plan.md`](docs/migration-plan.md) — the order in which
-  contracts migrate and which are deferred.
+- [`docs/migration-plan.md`](docs/migration-plan.md) — the first-wave migration
+  order and what is deferred.
+- [`docs/operation-aware-schema-readiness.md`](docs/operation-aware-schema-readiness.md)
+  — the second-wave (ADR-0005) plan and status.
 - [`schemas/README.md`](schemas/README.md) — schema directory structure and
   lifecycle.
 

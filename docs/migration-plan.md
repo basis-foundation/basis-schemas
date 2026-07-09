@@ -21,6 +21,14 @@ No placeholders remain. This completes the first planned migration wave; it does
 not close the contract set — the deferred contracts below, and any future shapes
 `basis-architecture` decides, may graduate into later waves.
 
+A second wave, tracked separately in
+[`operation-aware-schema-readiness.md`](operation-aware-schema-readiness.md),
+has since begun: the shared metadata and vocabulary contracts
+(`contract-metadata`, `redaction-classification`, `reason-code`) from
+`basis-architecture`'s operation-aware schema readiness plan (ADR-0005) are now
+published. That plan and this one are deliberately kept separate — this
+document's six-contract count and completeness claim are unaffected by it.
+
 ---
 
 ## Migration order
@@ -103,8 +111,15 @@ establish the repository's conventions:
   the first contracts are published they have something to snapshot against;
   building the fixtures is deferred to a later phase as the contracts advance
   beyond `experimental`.
-- **Schema versioning metadata format** — generalized version/compatibility
-  identifiers. Introduced alongside the first contracts rather than ahead of them.
+- **Schema version negotiation and compatibility resolution** — runtime
+  behavior for how a consumer should respond when it encounters a contract
+  version or lifecycle state it does not recognize. This is distinct from
+  *declaring* a contract's identifier, version, lifecycle, and governance
+  metadata, which the second-wave `contract-metadata` contract now publishes
+  (see [`operation-aware-schema-readiness.md`](operation-aware-schema-readiness.md)
+  and [`contract-metadata.md`](contract-metadata.md)) — that publication
+  defines metadata only and implements no negotiation or resolution logic.
+  Deciding what a consumer does with a version mismatch remains deferred.
 
 ## Contracts that do not migrate
 

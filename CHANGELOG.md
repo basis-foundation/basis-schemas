@@ -10,6 +10,50 @@ contract versions and lifecycle states follow
 
 ## [Unreleased]
 
+### Added
+
+- **Contract metadata contract published** (second-wave, PR A of
+  `basis-architecture`'s operation-aware schema readiness plan, ADR-0005).
+  `schemas/contract-metadata/contract-metadata.yaml` formalizes the
+  `contract:` block pattern already used identically by all six first-wave
+  contracts (identifier, title, version, lifecycle, governance, source,
+  description, optional `depends_on`) as its own reusable, citable contract.
+  Contract version `0.1.0`, lifecycle `experimental`. No existing contract's
+  `contract:` block changes; this publishes the pattern they already follow.
+  `docs/contract-metadata.md` added.
+- **Redaction classification contract published** (second-wave, PR A).
+  `schemas/redaction-classification/redaction-classification.yaml` publishes
+  the five-value vocabulary decided in `basis-architecture`
+  (`docs/architecture/operation-aware-trace-audit-evidence.md`, ADR-0003,
+  §10): `safe_to_expose`, `safe_after_redaction`, `reference_only`,
+  `never_store`, `never_display`. Contract version `0.1.0`, lifecycle
+  `experimental`. Declares `depends_on: [contract-metadata]`. Vocabulary only;
+  no redaction behavior implemented. `docs/redaction-classification.md` added.
+- **Reason code contract published** (second-wave, PR A).
+  `schemas/reason-code/reason-code.yaml` publishes the structural format a
+  reason code must satisfy (lowercase snake_case token,
+  `^[a-z][a-z0-9]*(_[a-z0-9]+)*$`), from ADR-0003 §12 and the policy/rule
+  model §13. Contract version `0.1.0`, lifecycle `experimental`. Declares
+  `depends_on: [contract-metadata]`. Deliberately not a closed enum — the
+  final reason-code vocabulary remains deferred to the contracts that carry a
+  `reason_code` field in practice. `docs/reason-code.md` added.
+- `docs/operation-aware-schema-readiness.md` — tracks the ADR-0005 PR A–G
+  publication order and status, separately from the first-wave
+  `docs/migration-plan.md`, which is unaffected and remains complete.
+- `basis_schemas.OPERATION_AWARE_SHARED_METADATA_CONTRACTS` metadata listing
+  the three second-wave contracts published by PR A. Additive: does not
+  change `PLANNED_CONTRACTS` or `PUBLISHED_CONTRACTS`, which continue to track
+  only the original six-contract first wave.
+
+These three contracts are shared foundation building blocks only. They do not
+introduce the operation-aware `DecisionRequest`/`DecisionResponse`,
+`PolicyBundle`/`PolicyRule`/`PolicyCondition`, `EvaluationTrace`/
+`TraceRuleEvidence`, `AuditEvidence`/`GatewayAuditEvent`,
+`AdapterEvidenceReference`/`IdentityEvidenceReference`, a final reason-code
+vocabulary, or compatibility/test-vector fixtures — each is deferred to a
+later PR (B through G) per ADR-0005 and
+`docs/operation-aware-schema-readiness.md`.
+
 ## [0.1.0] - 2026-06-28
 
 First public release of `basis-schemas`. It publishes the six contracts of the
