@@ -137,12 +137,19 @@ copies — they hold imports of the single published definition.
 The ownership model above is not limited to the six first-wave contracts. As
 `basis-architecture`'s operation-aware schema readiness plan (ADR-0005,
 `docs/architecture/operation-aware-schema-readiness-plan.md`) publishes further
-contracts here — starting with the shared metadata and vocabulary contracts in
-[`operation-aware-schema-readiness.md`](operation-aware-schema-readiness.md) —
-the same boundaries apply unchanged: `basis-architecture` decides the shape,
-`basis-schemas` publishes it, and implementations consume it. No new ownership
-model is introduced for the operation-aware contracts; they are additive
-publications under the model already described above.
+contracts here — starting with the shared metadata and vocabulary contracts
+(PR A) and now the identity- and adapter-evidence-reference contracts (PR B)
+in [`operation-aware-schema-readiness.md`](operation-aware-schema-readiness.md)
+— the same boundaries apply unchanged: `basis-architecture` decides the
+shape, `basis-schemas` publishes it, and implementations consume it. No new
+ownership model is introduced for the operation-aware contracts; they are
+additive publications under the model already described above. The evidence
+reference contracts in particular preserve the boundaries already stated:
+`basis-identity` produces identity evidence, `basis-adapters` produces
+normalized adapter evidence, `basis-gateway` will assemble references into
+operation-aware requests and audit events, `basis-core` consumes references
+as request context without retrieving or interpreting raw evidence, and
+`basis-console` will display redacted reference metadata only.
 
 ## Tooling rationale
 
