@@ -29,13 +29,24 @@ Each contract lives in its own directory, named for the contract:
 
 ```text
 schemas/
-├── vocabulary/             the five canonical action verbs       — PUBLISHED (vocabulary.yaml)
-├── action-string/          {verb}:{domain}[:{object}]            — PUBLISHED (action-string.yaml)
-├── resource-identifier/    {resource_type}:{local_resource_id}  — PUBLISHED (resource-identifier.yaml)
-├── decision-request/       kernel input shape                   — PUBLISHED (decision-request.yaml)
-├── decision-response/      kernel output shape                  — PUBLISHED (decision-response.yaml)
-└── audit-event/            canonical audit record shape         — PUBLISHED (audit-event.yaml)
+├── vocabulary/                 the five canonical action verbs       — PUBLISHED (vocabulary.yaml)
+├── action-string/               {verb}:{domain}[:{object}]            — PUBLISHED (action-string.yaml)
+├── resource-identifier/        {resource_type}:{local_resource_id}  — PUBLISHED (resource-identifier.yaml)
+├── decision-request/            kernel input shape                   — PUBLISHED (decision-request.yaml)
+├── decision-response/           kernel output shape                  — PUBLISHED (decision-response.yaml)
+├── audit-event/                 canonical audit record shape         — PUBLISHED (audit-event.yaml)
+├── contract-metadata/           the `contract:` block shape itself   — PUBLISHED (contract-metadata.yaml)
+├── redaction-classification/    5-value redaction vocabulary         — PUBLISHED (redaction-classification.yaml)
+└── reason-code/                 reason-code string format            — PUBLISHED (reason-code.yaml)
 ```
+
+The first six directories are the first-wave contracts described above and in
+[`../docs/migration-plan.md`](../docs/migration-plan.md). The last three —
+`contract-metadata`, `redaction-classification`, and `reason-code` — are a
+second wave: shared foundation contracts from `basis-architecture`'s
+operation-aware schema readiness plan (ADR-0005). They are not part of the
+first wave's six-contract count and do not extend it. See
+[`../docs/operation-aware-schema-readiness.md`](../docs/operation-aware-schema-readiness.md).
 
 Every directory above now holds a real schema definition; no `PLACEHOLDER.md`
 files remain. When a future contract is added, it follows the same pattern: a
@@ -71,6 +82,13 @@ When a contract builds on another, it declares the dependency with `depends_on`.
 The action-string contract, for example, declares `depends_on: [vocabulary]`
 because its verb segment draws its allowed values from the vocabulary contract —
 the shape is published here, the verbs are published there.
+
+This pattern is now formalized as its own reusable contract,
+[`contract-metadata`](contract-metadata/contract-metadata.yaml) (see
+[`../docs/contract-metadata.md`](../docs/contract-metadata.md)), so it has a
+citable definition rather than only this prose description. No existing
+contract needs to change: `contract-metadata` publishes the shape every
+contract here already follows.
 
 YAML is the chosen format: it is human-diffable, comment-friendly, and trivially
 machine-readable. This repository deliberately does **not** adopt a full

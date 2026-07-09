@@ -70,3 +70,23 @@ def test_repository_is_past_phase1_foundation() -> None:
     # The placeholder-only foundation phase is over now that the vocabulary
     # contract is published. This flips back only if all contracts are unpublished.
     assert basis_schemas.is_phase1_foundation() is False
+
+
+def test_operation_aware_shared_metadata_contracts_match_pr_a() -> None:
+    # The three shared contracts published by PR A of the operation-aware
+    # schema readiness plan (ADR-0005), in publication order.
+    assert basis_schemas.OPERATION_AWARE_SHARED_METADATA_CONTRACTS == (
+        "contract-metadata",
+        "redaction-classification",
+        "reason-code",
+    )
+
+
+def test_operation_aware_shared_metadata_contracts_do_not_extend_first_wave() -> None:
+    # The second wave is additive and separate: it must not appear in, or
+    # change the length of, the first-wave six-contract tuples.
+    assert len(basis_schemas.PLANNED_CONTRACTS) == 6
+    assert len(basis_schemas.PUBLISHED_CONTRACTS) == 6
+    for contract in basis_schemas.OPERATION_AWARE_SHARED_METADATA_CONTRACTS:
+        assert contract not in basis_schemas.PLANNED_CONTRACTS
+        assert contract not in basis_schemas.PUBLISHED_CONTRACTS

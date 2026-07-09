@@ -23,10 +23,35 @@ def test_required_docs_exist() -> None:
         "docs/architecture.md",
         "docs/contract-governance.md",
         "docs/migration-plan.md",
+        "docs/operation-aware-schema-readiness.md",
+        "docs/contract-metadata.md",
+        "docs/redaction-classification.md",
+        "docs/reason-code.md",
         "schemas/README.md",
     ]
     missing = [path for path in required if not (REPO_ROOT / path).is_file()]
     assert not missing, f"missing required files: {missing}"
+
+
+def test_operation_aware_shared_metadata_contracts_have_directories() -> None:
+    # The second-wave shared contracts (PR A of the operation-aware schema
+    # readiness plan) each have a real schema definition, mirroring the
+    # first-wave invariant above but tracked via a separate metadata tuple.
+    for contract in basis_schemas.OPERATION_AWARE_SHARED_METADATA_CONTRACTS:
+        directory = REPO_ROOT / "schemas" / contract
+        assert directory.is_dir(), f"missing schema directory: {contract}"
+        schema_file = directory / f"{contract}.yaml"
+        assert schema_file.is_file(), f"missing schema file: {schema_file}"
+
+
+def test_operation_aware_shared_metadata_contracts_are_disjoint_from_first_wave() -> None:
+    # The second wave must never be conflated with the first-wave six-contract
+    # migration: no name should appear in both tuples.
+    first_wave = set(basis_schemas.PLANNED_CONTRACTS)
+    second_wave = set(basis_schemas.OPERATION_AWARE_SHARED_METADATA_CONTRACTS)
+    assert not (first_wave & second_wave), (
+        f"contract names appear in both waves: {first_wave & second_wave}"
+    )
 
 
 def test_every_planned_contract_has_a_directory() -> None:
