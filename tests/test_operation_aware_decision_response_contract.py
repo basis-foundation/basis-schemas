@@ -20,7 +20,6 @@ objects.
 from __future__ import annotations
 
 import re
-import subprocess
 from pathlib import Path
 
 import pytest
@@ -259,19 +258,43 @@ def test_declares_dependency_on_operation_aware_decision_request() -> None:
     assert "operation-aware-decision-request" in _load()["contract"]["depends_on"]
 
 
-def test_first_wave_decision_response_is_completely_unchanged() -> None:
-    # Uses git to assert there is no diff against main for the first-wave
-    # response contract and its doc, guarding against an accidental edit.
-    for path in (FIRST_WAVE_RESPONSE_FILE, FIRST_WAVE_RESPONSE_DOC):
-        result = subprocess.run(
-            ["git", "diff", "main", "--", str(path.relative_to(REPO_ROOT))],
-            cwd=REPO_ROOT,
-            capture_output=True,
-            text=True,
-            check=False,
-        )
-        assert result.returncode == 0, f"git diff failed for {path}: {result.stderr}"
-        assert result.stdout == "", f"first-wave file changed unexpectedly: {path}\n{result.stdout}"
+def test_first_wave_decision_response_contract_remains_unchanged() -> None:
+    # Hermetic structural regression test: reproduces the first-wave
+    # contract's own published surface directly from the YAML, rather than
+    # diffing against a `main` git ref (which is not guaranteed to exist in
+    # every checkout, e.g. a CI runner's shallow/branch-only clone). This
+    # guards against an accidental edit without depending on git history;
+    # tests/test_decision_response_contract.py remains the primary,
+    # authoritative first-wave contract test — these are the specific
+    # structural facts this PR must not have disturbed.
+    assert FIRST_WAVE_RESPONSE_FILE.is_file()
+    assert FIRST_WAVE_RESPONSE_DOC.is_file()
+
+    first_wave = _load_yaml(FIRST_WAVE_RESPONSE_FILE)
+    contract = first_wave["contract"]
+    body = first_wave["decision_response"]
+
+    assert contract["name"] == "decision-response"
+    assert contract["title"] == "BASIS Decision Response"
+    assert contract["version"] == "0.1.0"
+    assert contract["lifecycle"] == "experimental"
+    assert contract["governed_by"] == "basis-architecture"
+    assert contract["published_by"] == "basis-schemas"
+    assert contract["depends_on"] == ["decision-request"]
+
+    assert body["required"] == ["request_id", "outcome", "reason", "evaluated_by", "timestamp"]
+    assert body["optional"] == ["policy_version", "failure_reason"]
+    assert body["additional_properties"] is False
+    assert body["outcome_values"] == ["allow", "deny", "not_applicable"]
+    assert body["failure_reason_values"] == [
+        "malformed_request",
+        "policy_error",
+        "audit_error",
+        "internal_error",
+    ]
+
+    assert len(body["examples"]["valid"]) == 4
+    assert len(body["examples"]["invalid"]) == 10
 
 
 def test_first_wave_response_still_has_its_own_outcome_and_failure_reason() -> None:
