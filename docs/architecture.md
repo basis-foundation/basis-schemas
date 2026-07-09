@@ -148,8 +148,9 @@ The ownership model above is not limited to the six first-wave contracts. As
 `basis-architecture`'s operation-aware schema readiness plan (ADR-0005,
 `docs/architecture/operation-aware-schema-readiness-plan.md`) publishes further
 contracts here — starting with the shared metadata and vocabulary contracts
-(PR A), the identity- and adapter-evidence-reference contracts (PR B), and
-now the operation-aware decision request (PR C) — see
+(PR A), the identity- and adapter-evidence-reference contracts (PR B), the
+operation-aware decision request (PR C), and now the policy bundle and rule
+contracts (PR D) — see
 [`operation-aware-schema-readiness.md`](operation-aware-schema-readiness.md)
 — the same boundaries apply unchanged: `basis-architecture` decides the
 shape, `basis-schemas` publishes it, and implementations consume it. No new
@@ -165,6 +166,23 @@ operation-aware decision request preserves the same evaluation boundary:
 `basis-gateway` assembles the request, `basis-core` evaluates it, and
 `basis-schemas` publishes only the shape — no implementation repository
 consumes PR C yet.
+
+PR D's policy bundle and rule contracts (`policy-condition`, `policy-rule`,
+`policy-bundle`) preserve the same boundaries again, restated at the policy
+level per ADR-0004 Section 16: `basis-architecture` defines policy model
+semantics and governance direction; `basis-schemas` publishes the
+machine-readable policy contract shapes only (this repository never
+implements policy evaluation); a future `basis-core` v0.2.0 validates and
+evaluates policy bundles deterministically; a future `basis-gateway` loads,
+selects, and configures policy bundles as runtime input but does not define
+policy semantics; `basis-adapters` never author, interpret, or enforce
+policy; `basis-identity` never authors or evaluates policy; `basis-console`
+may later visualize policy, explanations, and traces but does not evaluate
+policy. These contracts publish a structured policy **data model**, not a
+policy language: no policy language (Rego, Cedar, CEL, Python, JavaScript,
+SQL, WASM, or a custom DSL) is chosen, and no executable policy expression,
+embedded code, or `script` field is published. No implementation repository
+consumes PR D yet.
 
 ## Tooling rationale
 

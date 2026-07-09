@@ -12,6 +12,117 @@ contract versions and lifecycle states follow
 
 ### Added
 
+- **Policy bundle and rule contracts published** (second-wave, PR D of
+  `basis-architecture`'s operation-aware schema readiness plan, ADR-0005).
+  Publishes the machine-readable policy model a future `basis-core` v0.2.0
+  will validate and evaluate against the operation-aware request published
+  by PR C, per the policy bundle/rule model in
+  `docs/architecture/operation-aware-policy-rule-model.md` (ADR-0004). This
+  is a structured policy **data model**, not a policy language: no Rego,
+  Cedar, CEL, Python, JavaScript, SQL, WASM, or custom DSL is chosen, and no
+  executable policy expression, embedded code, or `script` field is
+  published. Three contracts, in dependency order:
+  - `schemas/policy-condition/policy-condition.yaml` — a deterministic,
+    data-only predicate: `condition_id`, a validated dotted `field_path`
+    referencing an operation-aware-decision-request category, an open (not
+    closed-enum) lowercase snake_case `operator`, and a
+    smallest-safe-representation `expected_value` (string, number, boolean,
+    null, or a homogeneous array of those scalars). All four fields
+    required; no optional fields. Contract version `0.1.0`, lifecycle
+    `experimental`. Declares `depends_on: [contract-metadata]`. The operator
+    vocabulary is deliberately open (ADR-0004 Section 7 defers the operator
+    language); a structurally valid field path or operator is never a claim
+    of `basis-core` runtime support.
+  - `schemas/policy-rule/policy-rule.yaml` — a deterministic unit of
+    evaluation: a stable `rule_id`, an effect closed to exactly `allow` /
+    `deny` (ADR-0004 Section 5) — `not_applicable` is rejected, because it
+    is a bundle-applicability outcome (ADR-0002 Section 5), never a rule
+    effect — explicit structured `match` criteria mirroring
+    operation-aware-decision-request's categories (subject/action/resource/
+    location/device/protocol/operation-intent/safety/environment/risk
+    selectors, each an any-of array; every populated selector category is
+    AND-combined), an optional non-empty `conditions` array of
+    policy-condition-shaped values with rule-level duplicate-condition-ID
+    rejection, an optional `reason_code` reusing the `reason-code` contract
+    unchanged, and an optional static, non-executable `explanation`. At
+    least one of `match` or `conditions` is required — this contract does
+    not permit an unconditional rule that implicitly matches every request.
+    No rule-ordering/priority field is published: ADR-0004 Section 10 and
+    the evaluation semantics document's Section 8 require any future
+    priority model to be explicit, which neither document yet is, so this
+    contract relies on the already-required, already-unique `rule_id` as a
+    future deterministic tie-breaker instead of inventing ordering
+    semantics. Contract version `0.1.0`, lifecycle `experimental`. Declares
+    `depends_on: [contract-metadata, policy-condition,
+    operation-aware-decision-request, reason-code, action-string,
+    resource-identifier]`.
+  - `schemas/policy-bundle/policy-bundle.yaml` — the unit of policy
+    identity, versioning, scope, ownership, provenance, and rule grouping:
+    `bundle_id`, `bundle_version` (this bundle's own content version) and
+    `schema_version` (the policy-bundle contract shape version an instance
+    targets) kept as two distinct required semver fields — neither
+    conflated with the other nor with the `basis-schemas` package version
+    — `policy_owner` (provenance/governance metadata only, never an
+    authorization subject, never a credential), an optional `scope` (small
+    explicit nested selectors: action, resource type, site/building/zone/
+    area, device class, environment mode, authority mode, protocol; absent
+    scope means globally applicable, a present scope restricts
+    applicability to requests matching every populated selector, and an
+    entirely empty scope object is invalid), and a required non-empty
+    `rules` array of policy-rule-shaped values with bundle-level duplicate-
+    rule-ID rejection. Optional descriptive/provenance/deprecation
+    metadata: `description`, `source_ref`, `approval_ref`, `created_at`,
+    `updated_at`, `compatibility_target`, `deprecated`, `replaced_by`. **No
+    `validation_status` field is published** — a bundle cannot make itself
+    valid by declaring itself valid; validity is derived by a future
+    `basis-core` validator/runtime process, never self-asserted. Contract
+    version `0.1.0`, lifecycle `experimental`. Declares
+    `depends_on: [contract-metadata, policy-rule]`.
+  `docs/policy-condition.md`, `docs/policy-rule.md`, and
+  `docs/policy-bundle.md` added. Cross-contract parity is enforced by tests:
+  `policy-rule`'s reproduced `action_pattern` / `resource_pattern` /
+  `resource_type_pattern` / `open_identifier_pattern` /
+  `operation_intent_values` / `reason_code_pattern` are tested against the
+  canonical `action-string`, `resource-identifier`,
+  `operation-aware-decision-request`, and `reason-code` contracts;
+  `policy-bundle`'s reproduced scope patterns are tested against
+  `policy-rule`'s own already-verified copies; nested condition and rule
+  shapes are tested for parity against their standalone contracts. Every
+  contract sets `additional_properties: false` at every object level and
+  never carries an `access_token`, `id_token`, `refresh_token`, `jwt`,
+  `bearer_token`, `authorization_header`, `cookie`, `session_secret`,
+  `client_secret`, `password`, `private_key`, `api_key`, `raw_claims`,
+  `raw_payload`, `raw_protocol_payload`, `device_secret`, `script`, `code`,
+  `executable`, `command`, `shell`, `python`, `javascript`, `rego`,
+  `cedar`, `cel`, `wasm`, `sql`, `template`, or `expression` field — any
+  such field is rejected as unknown, enforced by regression tests. Does not
+  implement policy loading, storage, distribution, synchronization,
+  signing, signature verification, tamper-evident packaging, an approval
+  workflow, an authoring UI, a simulation UI, deployment behavior,
+  multi-bundle hierarchy, policy federation, tenant/site policy delegation,
+  runtime evaluation, condition execution, gateway enforcement, or audit
+  persistence — every one of these remains explicitly deferred, per
+  ADR-0004 Section 18. No existing contract (`decision-request`,
+  `decision-response`, `audit-event`, `action-string`,
+  `resource-identifier`, `contract-metadata`, `redaction-classification`,
+  `reason-code`, `identity-evidence-reference`,
+  `adapter-evidence-reference`, `operation-aware-decision-request`)
+  changed shape, required fields, optional fields, examples, or validation
+  behavior, and none was made to depend on these three new contracts. Not
+  mandatory anywhere; no implementation repository consumes PR D yet.
+- `basis_schemas.OPERATION_AWARE_POLICY_CONTRACTS` metadata listing PR D's
+  three contracts in dependency-and-publication order. Additive: does not
+  change `PLANNED_CONTRACTS`, `PUBLISHED_CONTRACTS`,
+  `OPERATION_AWARE_SHARED_METADATA_CONTRACTS`,
+  `OPERATION_AWARE_EVIDENCE_REFERENCE_CONTRACTS`, or
+  `OPERATION_AWARE_REQUEST_CONTRACTS`.
+  `docs/operation-aware-schema-readiness.md` updated: PR D marked published,
+  with a section describing the contracts published, their dependency
+  order, policy scope, rule effects, request match criteria, condition
+  extensibility, reason-code reuse, validation boundaries, compatibility
+  posture, security boundaries, what PR D intentionally excludes, and how
+  PR E is expected to reference PR D's bundle/rule identifiers in a future
+  response and evaluation trace.
 - **Operation-aware decision request contract published** (second-wave,
   PR C of `basis-architecture`'s operation-aware schema readiness plan,
   ADR-0005).

@@ -144,3 +144,37 @@ def test_operation_aware_request_contracts_disjoint_from_pr_a_and_pr_b() -> None
     pr_c = set(basis_schemas.OPERATION_AWARE_REQUEST_CONTRACTS)
     assert not (pr_a & pr_c), f"contract names appear in both PR A and PR C: {pr_a & pr_c}"
     assert not (pr_b & pr_c), f"contract names appear in both PR B and PR C: {pr_b & pr_c}"
+
+
+def test_operation_aware_policy_contracts_match_pr_d() -> None:
+    # The three policy bundle/rule contracts published by PR D of the
+    # operation-aware schema readiness plan (ADR-0005), in dependency-and-
+    # publication order.
+    assert basis_schemas.OPERATION_AWARE_POLICY_CONTRACTS == (
+        "policy-condition",
+        "policy-rule",
+        "policy-bundle",
+    )
+
+
+def test_operation_aware_policy_contracts_do_not_extend_first_wave() -> None:
+    # PR D is additive and separate: it must not appear in, or change the
+    # length of, the first-wave six-contract tuples.
+    assert len(basis_schemas.PLANNED_CONTRACTS) == 6
+    assert len(basis_schemas.PUBLISHED_CONTRACTS) == 6
+    for contract in basis_schemas.OPERATION_AWARE_POLICY_CONTRACTS:
+        assert contract not in basis_schemas.PLANNED_CONTRACTS
+        assert contract not in basis_schemas.PUBLISHED_CONTRACTS
+
+
+def test_operation_aware_policy_contracts_disjoint_from_pr_a_pr_b_and_pr_c() -> None:
+    # PR D must never be conflated with PR A's shared metadata contracts,
+    # PR B's evidence-reference contracts, or PR C's request contract: no
+    # name should appear in more than one tracking tuple.
+    pr_a = set(basis_schemas.OPERATION_AWARE_SHARED_METADATA_CONTRACTS)
+    pr_b = set(basis_schemas.OPERATION_AWARE_EVIDENCE_REFERENCE_CONTRACTS)
+    pr_c = set(basis_schemas.OPERATION_AWARE_REQUEST_CONTRACTS)
+    pr_d = set(basis_schemas.OPERATION_AWARE_POLICY_CONTRACTS)
+    assert not (pr_a & pr_d), f"contract names appear in both PR A and PR D: {pr_a & pr_d}"
+    assert not (pr_b & pr_d), f"contract names appear in both PR B and PR D: {pr_b & pr_d}"
+    assert not (pr_c & pr_d), f"contract names appear in both PR C and PR D: {pr_c & pr_d}"
