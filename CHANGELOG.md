@@ -12,6 +12,47 @@ contract versions and lifecycle states follow
 
 ### Added
 
+- **Identity evidence reference contract published** (second-wave, PR B of
+  `basis-architecture`'s operation-aware schema readiness plan, ADR-0005).
+  `schemas/identity-evidence-reference/identity-evidence-reference.yaml`
+  publishes a safe reference to trusted identity evidence: `reference_id`,
+  `evidence_digest` (`algorithm` + `value`, structural only), a
+  provider-neutral `identity_source`, optional `normalization_version` /
+  `mapping_version` provenance, `redaction_classification` (reused, not
+  duplicated, from `redaction-classification`), and optional `request_id` /
+  `correlation_id`. Contract version `0.1.0`, lifecycle `experimental`.
+  Declares `depends_on: [contract-metadata, redaction-classification]`. Never
+  carries `access_token`, `id_token`, `refresh_token`, `jwt`, `bearer_token`,
+  `authorization_header`, `cookie`, `session_secret`, `client_secret`,
+  `password`, `private_key`, `raw_claims`, `full_claim_set`, or `credential`
+  — any such field is rejected as unknown. Does not define identity
+  establishment, authentication, claim validation, token verification,
+  evidence storage/retrieval/retention, or evidence signing/verification.
+  `docs/identity-evidence-reference.md` added.
+- **Adapter evidence reference contract published** (second-wave, PR B).
+  `schemas/adapter-evidence-reference/adapter-evidence-reference.yaml`
+  publishes a safe reference to normalized adapter evidence: `reference_id`,
+  `evidence_digest` (structural only), an opaque `adapter_source`, an
+  optional open (not closed-enum) `protocol` label, optional
+  `normalization_version` / `mapping_version` provenance,
+  `redaction_classification`, and optional `request_id` / `correlation_id`.
+  Contract version `0.1.0`, lifecycle `experimental`. Declares `depends_on:
+  [contract-metadata, redaction-classification]`. Never carries
+  `raw_payload`, `raw_protocol_payload`, `packet`, `frame`, `credential`,
+  `password`, `api_key`, `private_key`, or `unredacted_device_secret` — any
+  such field is rejected as unknown. Does not define adapter normalization
+  logic, protocol parsing, evidence storage/retrieval/retention, or evidence
+  signing/verification, and does not make `basis-core` protocol-aware.
+  `docs/adapter-evidence-reference.md` added.
+- `basis_schemas.OPERATION_AWARE_EVIDENCE_REFERENCE_CONTRACTS` metadata
+  listing the two PR B contracts, in publication order. Additive: does not
+  change `PLANNED_CONTRACTS`, `PUBLISHED_CONTRACTS`, or
+  `OPERATION_AWARE_SHARED_METADATA_CONTRACTS`.
+- `docs/operation-aware-schema-readiness.md` updated: PR B marked published,
+  with a section describing the contracts published, their dependencies,
+  what PR B intentionally excludes, and how PR C is expected to consume
+  these references (an optional field on a future operation-aware request,
+  not added by this PR).
 - **Contract metadata contract published** (second-wave, PR A of
   `basis-architecture`'s operation-aware schema readiness plan, ADR-0005).
   `schemas/contract-metadata/contract-metadata.yaml` formalizes the
@@ -45,13 +86,13 @@ contract versions and lifecycle states follow
   change `PLANNED_CONTRACTS` or `PUBLISHED_CONTRACTS`, which continue to track
   only the original six-contract first wave.
 
-These three contracts are shared foundation building blocks only. They do not
-introduce the operation-aware `DecisionRequest`/`DecisionResponse`,
+PR A's three contracts are shared foundation building blocks only; PR B's two
+contracts (above) are evidence-reference building blocks. Together they do
+not introduce the operation-aware `DecisionRequest`/`DecisionResponse`,
 `PolicyBundle`/`PolicyRule`/`PolicyCondition`, `EvaluationTrace`/
-`TraceRuleEvidence`, `AuditEvidence`/`GatewayAuditEvent`,
-`AdapterEvidenceReference`/`IdentityEvidenceReference`, a final reason-code
+`TraceRuleEvidence`, `AuditEvidence`/`GatewayAuditEvent`, a final reason-code
 vocabulary, or compatibility/test-vector fixtures — each is deferred to a
-later PR (B through G) per ADR-0005 and
+later PR (C through G) per ADR-0005 and
 `docs/operation-aware-schema-readiness.md`.
 
 ## [0.1.0] - 2026-06-28

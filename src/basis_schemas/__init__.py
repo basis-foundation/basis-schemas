@@ -18,6 +18,13 @@ below, deliberately kept separate from ``PLANNED_CONTRACTS`` /
 ``PUBLISHED_CONTRACTS``, which continue to track only the original six-contract
 first wave. See ``docs/operation-aware-schema-readiness.md``.
 
+PR B of that same second wave has since published the evidence-reference
+contracts — ``identity-evidence-reference`` and ``adapter-evidence-reference``
+— tracked separately again, in
+``OPERATION_AWARE_EVIDENCE_REFERENCE_CONTRACTS`` below, for the same reason:
+they are additive publications, not an extension of the first-wave six-contract
+count.
+
 This package does **not** define, validate, or implement any contract. Contracts
 are decided in ``basis-architecture`` and published, once migrated, under the
 ``schemas/`` directory.
@@ -34,6 +41,7 @@ __all__ = [
     "PUBLISHED_CONTRACTS",
     "CONTRACT_STATES",
     "OPERATION_AWARE_SHARED_METADATA_CONTRACTS",
+    "OPERATION_AWARE_EVIDENCE_REFERENCE_CONTRACTS",
     "is_phase1_foundation",
 ]
 
@@ -88,6 +96,21 @@ OPERATION_AWARE_SHARED_METADATA_CONTRACTS: Final[tuple[str, ...]] = (
     "contract-metadata",
     "redaction-classification",
     "reason-code",
+)
+
+#: Evidence-reference contracts published by PR B of the operation-aware
+#: schema readiness plan (``basis-architecture`` ADR-0005, "PR B — Evidence
+#: Reference Contracts"). These let future operation-aware request, trace,
+#: audit, and explanation contracts reference trusted identity evidence and
+#: normalized adapter evidence without embedding raw tokens, claims,
+#: credentials, or protocol payloads. Like
+#: ``OPERATION_AWARE_SHARED_METADATA_CONTRACTS`` above, this is a separate,
+#: additive tracking tuple: it does not extend ``PLANNED_CONTRACTS`` /
+#: ``PUBLISHED_CONTRACTS``, which continue to track only the original
+#: six-contract first wave. See ``docs/operation-aware-schema-readiness.md``.
+OPERATION_AWARE_EVIDENCE_REFERENCE_CONTRACTS: Final[tuple[str, ...]] = (
+    "identity-evidence-reference",
+    "adapter-evidence-reference",
 )
 
 

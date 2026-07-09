@@ -37,15 +37,19 @@ schemas/
 ├── audit-event/                 canonical audit record shape         — PUBLISHED (audit-event.yaml)
 ├── contract-metadata/           the `contract:` block shape itself   — PUBLISHED (contract-metadata.yaml)
 ├── redaction-classification/    5-value redaction vocabulary         — PUBLISHED (redaction-classification.yaml)
-└── reason-code/                 reason-code string format            — PUBLISHED (reason-code.yaml)
+├── reason-code/                 reason-code string format            — PUBLISHED (reason-code.yaml)
+├── identity-evidence-reference/ safe reference to identity evidence  — PUBLISHED (identity-evidence-reference.yaml)
+└── adapter-evidence-reference/  safe reference to adapter evidence   — PUBLISHED (adapter-evidence-reference.yaml)
 ```
 
 The first six directories are the first-wave contracts described above and in
-[`../docs/migration-plan.md`](../docs/migration-plan.md). The last three —
-`contract-metadata`, `redaction-classification`, and `reason-code` — are a
-second wave: shared foundation contracts from `basis-architecture`'s
-operation-aware schema readiness plan (ADR-0005). They are not part of the
-first wave's six-contract count and do not extend it. See
+[`../docs/migration-plan.md`](../docs/migration-plan.md). The last five —
+`contract-metadata`, `redaction-classification`, `reason-code`,
+`identity-evidence-reference`, and `adapter-evidence-reference` — are a
+second wave: shared foundation and evidence-reference contracts from
+`basis-architecture`'s operation-aware schema readiness plan (ADR-0005), PRs
+A and B respectively. They are not part of the first wave's six-contract
+count and do not extend it. See
 [`../docs/operation-aware-schema-readiness.md`](../docs/operation-aware-schema-readiness.md).
 
 Every directory above now holds a real schema definition; no `PLACEHOLDER.md`

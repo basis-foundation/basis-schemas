@@ -31,7 +31,8 @@ shapes those components exchange.
 > A second wave has since begun: **contract metadata**, **redaction
 > classification**, and **reason code** — the shared foundation contracts from
 > `basis-architecture`'s operation-aware schema readiness plan (ADR-0005) — are
-> now published. See
+> now published, along with that wave's **identity evidence reference** and
+> **adapter evidence reference** contracts (PR B). See
 > [`docs/operation-aware-schema-readiness.md`](docs/operation-aware-schema-readiness.md).
 
 ---
@@ -161,6 +162,29 @@ they do not extend or alter it. See
 [`docs/operation-aware-schema-readiness.md`](docs/operation-aware-schema-readiness.md)
 for the full second-wave plan and status.
 
+Its second PR — **evidence reference contracts** — is also now published:
+
+- **Identity evidence reference** — _published_ (`experimental`). A safe
+  reference to trusted identity evidence — a stable `reference_id`, a
+  structural `evidence_digest`, a provider-neutral `identity_source`, optional
+  normalization/claim-mapping version provenance, and a
+  `redaction_classification` — without embedding raw tokens, cookies,
+  credentials, or full claim sets. See
+  [`schemas/identity-evidence-reference/identity-evidence-reference.yaml`](schemas/identity-evidence-reference/identity-evidence-reference.yaml)
+  and [`docs/identity-evidence-reference.md`](docs/identity-evidence-reference.md).
+- **Adapter evidence reference** — _published_ (`experimental`). A safe
+  reference to normalized adapter evidence — a stable `reference_id`, a
+  structural `evidence_digest`, an opaque `adapter_source`, an optional open
+  `protocol` label, optional normalization/mapping version provenance, and a
+  `redaction_classification` — without embedding raw protocol payloads or
+  device credentials. See
+  [`schemas/adapter-evidence-reference/adapter-evidence-reference.yaml`](schemas/adapter-evidence-reference/adapter-evidence-reference.yaml)
+  and [`docs/adapter-evidence-reference.md`](docs/adapter-evidence-reference.md).
+
+Both declare `depends_on: [contract-metadata, redaction-classification]` and
+are additive and separate from the six-contract first wave and from PR A's
+shared metadata contracts; they do not extend or alter either.
+
 ---
 
 ## Repository layout
@@ -172,7 +196,9 @@ basis-schemas/
 │   ├── architecture.md            role in the ecosystem and dependency boundaries
 │   ├── contract-governance.md     contract states, compatibility, breaking changes
 │   ├── migration-plan.md          first-wave migration order and what is deferred
-│   └── operation-aware-schema-readiness.md   second-wave (ADR-0005) plan and status
+│   ├── operation-aware-schema-readiness.md   second-wave (ADR-0005) plan and status
+│   ├── identity-evidence-reference.md        PR B companion doc
+│   └── adapter-evidence-reference.md         PR B companion doc
 ├── schemas/
 │   ├── README.md                  directory structure and schema lifecycle
 │   ├── vocabulary/                published — vocabulary.yaml (experimental)
@@ -180,10 +206,12 @@ basis-schemas/
 │   ├── resource-identifier/       published — resource-identifier.yaml (experimental)
 │   ├── decision-request/          published — decision-request.yaml (experimental)
 │   ├── decision-response/         published — decision-response.yaml (experimental)
-│   ├── audit-event/               published — audit-event.yaml (experimental)
+│   ├── audit-event/                published — audit-event.yaml (experimental)
 │   ├── contract-metadata/         published — contract-metadata.yaml (experimental)
 │   ├── redaction-classification/  published — redaction-classification.yaml (experimental)
-│   └── reason-code/               published — reason-code.yaml (experimental)
+│   ├── reason-code/               published — reason-code.yaml (experimental)
+│   ├── identity-evidence-reference/  published — identity-evidence-reference.yaml (experimental)
+│   └── adapter-evidence-reference/   published — adapter-evidence-reference.yaml (experimental)
 ├── src/
 │   └── basis_schemas/             minimal package: repository metadata
 ├── tests/                         lightweight metadata and docs checks
@@ -201,6 +229,10 @@ basis-schemas/
   order and what is deferred.
 - [`docs/operation-aware-schema-readiness.md`](docs/operation-aware-schema-readiness.md)
   — the second-wave (ADR-0005) plan and status.
+- [`docs/identity-evidence-reference.md`](docs/identity-evidence-reference.md)
+  — the identity evidence reference contract (PR B).
+- [`docs/adapter-evidence-reference.md`](docs/adapter-evidence-reference.md)
+  — the adapter evidence reference contract (PR B).
 - [`schemas/README.md`](schemas/README.md) — schema directory structure and
   lifecycle.
 
