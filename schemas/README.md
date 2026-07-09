@@ -21,10 +21,11 @@ described in
 referenced below are defined in
 [`../docs/contract-governance.md`](../docs/contract-governance.md).
 
-A second wave has since added six further contracts — `contract-metadata`,
+A second wave has since added nine further contracts — `contract-metadata`,
 `redaction-classification`, `reason-code` (PR A), `identity-evidence-reference`,
-`adapter-evidence-reference` (PR B), and now
-`operation-aware-decision-request` (PR C) — tracked separately in
+`adapter-evidence-reference` (PR B), `operation-aware-decision-request` (PR C),
+and now `policy-condition`, `policy-rule`, `policy-bundle` (PR D) — tracked
+separately in
 [`../docs/operation-aware-schema-readiness.md`](../docs/operation-aware-schema-readiness.md).
 They are additive; they do not extend or alter the six-contract first wave.
 
@@ -47,19 +48,26 @@ schemas/
 ├── reason-code/                 reason-code string format            — PUBLISHED (reason-code.yaml)
 ├── identity-evidence-reference/ safe reference to identity evidence  — PUBLISHED (identity-evidence-reference.yaml)
 ├── adapter-evidence-reference/  safe reference to adapter evidence   — PUBLISHED (adapter-evidence-reference.yaml)
-└── operation-aware-decision-request/  additive vNext request shape  — PUBLISHED (operation-aware-decision-request.yaml)
+├── operation-aware-decision-request/  additive vNext request shape  — PUBLISHED (operation-aware-decision-request.yaml)
+├── policy-condition/            deterministic, data-only condition shape — PUBLISHED (policy-condition.yaml)
+├── policy-rule/                 allow/deny rule shape                — PUBLISHED (policy-rule.yaml)
+└── policy-bundle/                policy identity/version/scope/rules shape — PUBLISHED (policy-bundle.yaml)
 ```
 
 The first six directories are the first-wave contracts described above and in
-[`../docs/migration-plan.md`](../docs/migration-plan.md). The last six —
+[`../docs/migration-plan.md`](../docs/migration-plan.md). The last nine —
 `contract-metadata`, `redaction-classification`, `reason-code`,
-`identity-evidence-reference`, `adapter-evidence-reference`, and
-`operation-aware-decision-request` — are a second wave: shared foundation,
-evidence-reference, and request contracts from `basis-architecture`'s
-operation-aware schema readiness plan (ADR-0005), PRs A, B, and C
+`identity-evidence-reference`, `adapter-evidence-reference`,
+`operation-aware-decision-request`, `policy-condition`, `policy-rule`, and
+`policy-bundle` — are a second wave: shared foundation, evidence-reference,
+request, and policy bundle/rule contracts from `basis-architecture`'s
+operation-aware schema readiness plan (ADR-0005), PRs A, B, C, and D
 respectively. They are not part of the first wave's six-contract count and
 do not extend it. `operation-aware-decision-request` is additive alongside
-`decision-request`, not a replacement for it. See
+`decision-request`, not a replacement for it. `policy-condition`,
+`policy-rule`, and `policy-bundle` publish a structured policy DATA model,
+not a policy language — no policy evaluation is implemented by any contract
+in this repository. See
 [`../docs/operation-aware-schema-readiness.md`](../docs/operation-aware-schema-readiness.md).
 
 Every directory above now holds a real schema definition; no `PLACEHOLDER.md`

@@ -30,6 +30,9 @@ def test_required_docs_exist() -> None:
         "docs/identity-evidence-reference.md",
         "docs/adapter-evidence-reference.md",
         "docs/operation-aware-decision-request.md",
+        "docs/policy-condition.md",
+        "docs/policy-rule.md",
+        "docs/policy-bundle.md",
         "schemas/README.md",
     ]
     missing = [path for path in required if not (REPO_ROOT / path).is_file()]
@@ -94,6 +97,26 @@ def test_operation_aware_request_contracts_are_disjoint_from_first_wave() -> Non
     request_wave = set(basis_schemas.OPERATION_AWARE_REQUEST_CONTRACTS)
     assert not (first_wave & request_wave), (
         f"contract names appear in both waves: {first_wave & request_wave}"
+    )
+
+
+def test_operation_aware_policy_contracts_have_directories() -> None:
+    # PR D's policy bundle/rule contracts each have a real schema definition,
+    # mirroring the first-wave, PR A, PR B, and PR C invariants above.
+    for contract in basis_schemas.OPERATION_AWARE_POLICY_CONTRACTS:
+        directory = REPO_ROOT / "schemas" / contract
+        assert directory.is_dir(), f"missing schema directory: {contract}"
+        schema_file = directory / f"{contract}.yaml"
+        assert schema_file.is_file(), f"missing schema file: {schema_file}"
+
+
+def test_operation_aware_policy_contracts_are_disjoint_from_first_wave() -> None:
+    # PR D must never be conflated with the first-wave six-contract migration:
+    # no name should appear in both tuples.
+    first_wave = set(basis_schemas.PLANNED_CONTRACTS)
+    policy_wave = set(basis_schemas.OPERATION_AWARE_POLICY_CONTRACTS)
+    assert not (first_wave & policy_wave), (
+        f"contract names appear in both waves: {first_wave & policy_wave}"
     )
 
 

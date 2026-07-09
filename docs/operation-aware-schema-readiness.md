@@ -24,7 +24,7 @@ been published here, in what order, and what remains deferred.
 PR A — Shared Metadata and Vocabulary                    [published]
 PR B — Evidence Reference Contracts                      [published]
 PR C — Operation-Aware DecisionRequest                   [published]
-PR D — Policy Bundle and Rule Contracts                  [not started]
+PR D — Policy Bundle and Rule Contracts                  [published]
 PR E — DecisionResponse and EvaluationTrace               [not started]
 PR F — Audit Evidence and GatewayAuditEvent               [not started]
 PR G — Compatibility Examples and Test Vectors            [not started]
@@ -248,27 +248,194 @@ Consistent with ADR-0005's scope for PR C, this PR does not introduce:
 - Protocol payload schemas or protocol-specific operation objects
 - Topology discovery, audit storage, or policy loading
 
-### How PR D and PR E will build on this
+### How PR D and PR E build on this
 
-PR D (policy bundle and rule contracts) is expected to define match criteria
-that reference this request's categories — resource type, location, device
-class, protocol/operation evidence, operation intent, safety/environment/
-risk context — without this PR choosing a policy language or condition
-operator set. PR E (the operation-aware `DecisionResponse` and
-`EvaluationTrace`) is expected to echo this request's `request_id` the same
-way the first-wave `decision-response` echoes `decision-request`'s, and to
-reference the identity/adapter evidence this request optionally carries when
-explaining a trace. Neither PR D nor PR E exists yet; this section records
-expected dependency direction only, per ADR-0005 Section 6.
+PR D (policy bundle and rule contracts, now published — see below) defines
+match criteria that reference this request's categories — resource type,
+location, device class, protocol/operation evidence, operation intent,
+safety/environment/risk context — without choosing a policy language or a
+final condition operator set. PR E (the operation-aware `DecisionResponse`
+and `EvaluationTrace`) is expected to echo this request's `request_id` the
+same way the first-wave `decision-response` echoes `decision-request`'s, and
+to reference the identity/adapter evidence this request optionally carries,
+and PR D's bundle/rule identifiers, when explaining a trace. PR E does not
+exist yet; this section records expected dependency direction only, per
+ADR-0005 Section 6.
 
-## PRs D through G — not started
+## PR D — Policy Bundle and Rule Contracts — published
 
-The remaining PRs (policy bundle/rule contracts; response and trace; audit
-evidence and gateway audit event; compatibility examples and test vectors)
-are not yet started. Each becomes ready for its own PR once the contracts it
-depends on, per ADR-0005 Section 6, are published. This document will be
-updated as each PR lands, the same way
-[`migration-plan.md`](migration-plan.md) was updated across the first wave.
+PR D publishes the machine-readable policy model a future `basis-core`
+v0.2.0 will validate and evaluate against the operation-aware request
+published by PR C:
+
+- **[Policy condition](policy-condition.md)** —
+  `schemas/policy-condition/policy-condition.yaml`. A deterministic,
+  data-only predicate: `condition_id`, a validated dotted `field_path`
+  referencing an `operation-aware-decision-request` category, an open
+  (not closed-enum) lowercase snake_case `operator`, and a
+  smallest-safe-representation `expected_value` (string, number, boolean,
+  null, or a homogeneous array of those scalars). Declares
+  `depends_on: [contract-metadata]`.
+- **[Policy rule](policy-rule.md)** —
+  `schemas/policy-rule/policy-rule.yaml`. A deterministic unit of
+  evaluation: a stable `rule_id`, a closed `effect` (`allow` / `deny`
+  only — `not_applicable` is excluded, as it is a bundle-applicability
+  outcome, not a rule effect), explicit structured `match` criteria
+  mirroring PR C's request categories, an optional `conditions` array of
+  policy-condition-shaped values, an optional `reason_code` (reusing
+  `reason-code` unchanged), and an optional static `explanation`. At least
+  one of `match` or `conditions` is required — this contract does not
+  permit an unconditional rule. Declares
+  `depends_on: [contract-metadata, policy-condition,
+  operation-aware-decision-request, reason-code, action-string,
+  resource-identifier]`.
+- **[Policy bundle](policy-bundle.md)** —
+  `schemas/policy-bundle/policy-bundle.yaml`. The unit of policy identity,
+  versioning, scope, ownership, and rule grouping: `bundle_id`,
+  `bundle_version` (this bundle's content version) and `schema_version`
+  (the contract-shape version an instance targets, kept distinct from
+  both `bundle_version` and the `basis-schemas` package version),
+  `policy_owner` (provenance only, never an authorization subject), an
+  optional `scope` (absent means globally applicable), and a non-empty
+  `rules` array of policy-rule-shaped values, plus optional
+  descriptive/provenance/deprecation metadata. No self-attested
+  `validation_status` field is published — validity is derived by a
+  future validator, never self-declared. Declares
+  `depends_on: [contract-metadata, policy-rule]`.
+
+All three are published at contract version `0.1.0`, lifecycle
+`experimental`, in dependency order (`policy-condition` before
+`policy-rule` before `policy-bundle`), tracked in
+`basis_schemas.OPERATION_AWARE_POLICY_CONTRACTS`.
+
+### Policy scope
+
+`policy-bundle`'s `scope` determines whether a bundle applies to a request
+at all — distinct from `policy-rule`'s `match`, which determines which
+`allow`/`deny` rules inside an already-applicable bundle are candidates.
+Scope covers the categories ADR-0004 Section 3 names as justified: action
+vocabulary, resource type, site/building/zone/area, device class,
+environment/deployment, identity authority mode, and protocol. Absent scope
+means globally applicable; a present scope restricts applicability to
+requests matching every populated selector; an entirely empty scope object
+is invalid (use omission instead). Whether a present-but-non-matching scope
+resolves to `NOT_APPLICABLE` is evaluation semantics (ADR-0002 Section 5),
+documented but not implemented by these contracts.
+
+### Rule effects
+
+Closed to exactly `allow` and `deny` (ADR-0004 Section 5). `NOT_APPLICABLE`
+is deliberately excluded as a rule effect — it is a bundle-applicability
+outcome (ADR-0002 Section 5), never something an individual rule produces.
+No `warn`, `advisory`, `audit_only`, `log_only`, or `permit_with_override`
+effect is introduced.
+
+### Request match criteria
+
+`policy-rule`'s `match` selectors mirror every category ADR-0004 Section 6
+names as drawn from the `DecisionRequest`: subject identity/roles, identity
+source/authority mode, action, resource/resource type, site/building/zone/
+area, device identity/class, protocol/protocol operation, operation intent,
+and safety/environment/risk classification. Within one populated selector,
+values are alternatives (any-of); across populated selector categories, all
+must match (AND); an absent selector imposes no restriction; an empty
+selector list is invalid. This selector-combination contract is a
+`basis-schemas` publication choice (documented, not implemented), made
+because ADR-0004 names the categories without settling their combination
+semantics beyond bundle-level deny precedence.
+
+### Condition extensibility
+
+`policy-condition`'s `operator` vocabulary is deliberately open, per
+ADR-0004 Section 7's explicit deferral of the operator/condition language.
+The schema validates structural well-formedness only (lowercase snake_case);
+future basis-core policy validation determines which operators, and which
+`field_path` values, are actually supported. A structurally valid value is
+never a claim of runtime support.
+
+### Reason-code reuse
+
+`policy-rule`'s optional `reason_code` reuses the `reason-code` contract's
+published pattern exactly. No new closed policy reason-code vocabulary is
+introduced by PR D; `illustrative_reason_codes` in `policy-rule.yaml` lists
+synthetic, non-final examples only, echoing (not replacing) ADR-0004
+Section 13's own illustrative codes.
+
+### Validation boundaries
+
+PR D's contracts and companion tests distinguish, per ADR-0004 Section 11:
+**schema-level validation** (required fields, types, enums, patterns,
+unknown fields, nested shapes — enforced by each contract's own published
+field policy); **bundle validation** (duplicate `rule_id` values across a
+bundle, duplicate `condition_id` values within one rule, unsupported field
+paths/operators, incompatible schema versions — enforced by this
+repository's test suite, not by static YAML/JSON-Schema notation alone);
+and **evaluation semantics** (condition matching, deny precedence, default
+deny, final outcome — explicitly **not** implemented by any PR D contract).
+Invalid policy bundles must never produce `ALLOW` — a requirement PR D
+documents for a future `basis-core` validator/evaluator to satisfy, not
+something these static contracts implement themselves.
+
+### Compatibility posture
+
+Purely additive. PR D does not modify `decision-request`, `decision-
+response`, `audit-event`, `action-string`, `resource-identifier`,
+`contract-metadata`, `redaction-classification`, `reason-code`,
+`identity-evidence-reference`, `adapter-evidence-reference`, or
+`operation-aware-decision-request` — their shapes, required fields,
+optional fields, examples, and validation behavior are all unchanged, and
+none is made to depend on PR D's new contracts. None of PR D's three
+contracts is mandatory anywhere; no implementation repository consumes
+them yet.
+
+### Security boundaries
+
+None of PR D's contracts define an `access_token`, `id_token`,
+`refresh_token`, `jwt`, `bearer_token`, `authorization_header`, `cookie`,
+`session_secret`, `client_secret`, `password`, `private_key`, `api_key`,
+`raw_claims`, `raw_payload`, `raw_protocol_payload`, or `device_secret`
+field, and none defines a `script`, `code`, `executable`, `command`,
+`shell`, `python`, `javascript`, `rego`, `cedar`, `cel`, `wasm`, `sql`,
+`template`, or `expression` field — enforced by regression tests, not
+merely documented.
+
+### What PR D deliberately excludes
+
+Consistent with ADR-0005's own scope for PR D and ADR-0004 Section 18, this
+PR does not introduce or implement: a policy language (Rego, Cedar, CEL,
+Python, JavaScript, SQL, WASM, or a custom DSL); executable policy
+expressions or embedded code; a final, closed condition-operator registry;
+a final, closed reason-code vocabulary; rule ordering/priority semantics
+(deferred — see [`policy-rule.md`](policy-rule.md), "Rule ordering
+decision"); policy loading, storage, distribution, or synchronization;
+policy signing or signature verification; tamper-evident packaging; a
+policy approval workflow; a policy authoring or simulation UI; policy
+deployment behavior; multi-bundle hierarchy or policy federation;
+tenant/site policy delegation; runtime policy evaluation; condition
+execution; gateway enforcement; or audit persistence. An operation-aware
+`DecisionResponse`, `EvaluationTrace`, `TraceRuleEvidence`, `AuditEvidence`,
+`GatewayAuditEvent`, and a compatibility-test-vector framework remain
+deferred to PR E through PR G below.
+
+### How PR E will reference bundle/rule identifiers
+
+PR E (the operation-aware `DecisionResponse` and `EvaluationTrace`) is
+expected to reference PR D's `bundle_id`, `bundle_version`, and `rule_id`
+values in a future response's policy-identification fields and in
+evaluation trace rule evidence, the same way PR C's `request_id` is
+expected to be echoed by PR E's response. Neither PR E, PR F, nor PR G
+exists yet; this section records expected dependency direction only, per
+ADR-0005 Section 6. PR D does not imply that basis-core consumes these
+policy contracts yet — no implementation repository does.
+
+## PRs E through G — not started
+
+The remaining PRs (response and trace; audit evidence and gateway audit
+event; compatibility examples and test vectors) are not yet started. Each
+becomes ready for its own PR once the contracts it depends on, per ADR-0005
+Section 6, are published. This document will be updated as each PR lands,
+the same way [`migration-plan.md`](migration-plan.md) was updated across
+the first wave.
 
 ## Relationship to the first wave
 
@@ -283,8 +450,10 @@ ADR-0005 Section 7. Within the operation-aware second wave, each ordered PR
 gets its own tracking tuple rather than sharing one: PR A's shared contracts
 are tracked in `basis_schemas.OPERATION_AWARE_SHARED_METADATA_CONTRACTS`, PR
 B's evidence-reference contracts in
-`basis_schemas.OPERATION_AWARE_EVIDENCE_REFERENCE_CONTRACTS`, and PR C's
-request contract in `basis_schemas.OPERATION_AWARE_REQUEST_CONTRACTS`. This
-is one first wave plus one second wave organized into per-PR tracking
-groups — not four separate waves — so none of these tracking groups'
-completeness claims ever conflate.
+`basis_schemas.OPERATION_AWARE_EVIDENCE_REFERENCE_CONTRACTS`, PR C's
+request contract in `basis_schemas.OPERATION_AWARE_REQUEST_CONTRACTS`, and
+PR D's policy bundle/rule contracts in
+`basis_schemas.OPERATION_AWARE_POLICY_CONTRACTS`. This is one first wave
+plus one second wave organized into per-PR tracking groups — not five
+separate waves — so none of these tracking groups' completeness claims
+ever conflate.

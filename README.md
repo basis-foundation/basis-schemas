@@ -32,8 +32,10 @@ shapes those components exchange.
 > classification**, and **reason code** — the shared foundation contracts from
 > `basis-architecture`'s operation-aware schema readiness plan (ADR-0005) — are
 > now published, along with that wave's **identity evidence reference** and
-> **adapter evidence reference** contracts (PR B) and the **operation-aware
-> decision request** (PR C) — an additive vNext request contract; the
+> **adapter evidence reference** contracts (PR B), the **operation-aware
+> decision request** (PR C) — an additive vNext request contract — and the
+> **policy condition**, **policy rule**, and **policy bundle** contracts
+> (PR D) — a structured policy *data model*, not a policy language; the
 > first-wave **decision request** above remains published and unchanged. See
 > [`docs/operation-aware-schema-readiness.md`](docs/operation-aware-schema-readiness.md).
 
@@ -225,6 +227,45 @@ separate from the six-contract first wave, PR A's shared metadata contracts,
 and PR B's evidence-reference contracts; it does not extend or alter any of
 them.
 
+Its fourth PR — **policy bundle and rule contracts** — is also now
+published:
+
+- **Policy condition** — _published_ (`experimental`). A deterministic,
+  data-only predicate: `condition_id`, a validated dotted `field_path`
+  referencing an operation-aware request category, an open (not
+  closed-enum) lowercase snake_case `operator`, and a
+  smallest-safe-representation `expected_value`. See
+  [`schemas/policy-condition/policy-condition.yaml`](schemas/policy-condition/policy-condition.yaml)
+  and [`docs/policy-condition.md`](docs/policy-condition.md).
+- **Policy rule** — _published_ (`experimental`). A deterministic unit of
+  evaluation: a stable `rule_id`, an effect closed to `allow`/`deny`
+  (never `not_applicable`, which is a bundle-applicability outcome, not a
+  rule effect), explicit match criteria mirroring PR C's request
+  categories, optional policy-condition-shaped `conditions`, an optional
+  `reason_code` (reusing `reason-code` unchanged), and an optional static
+  `explanation`. At least one of `match` or `conditions` is required — no
+  unconditional rules. See
+  [`schemas/policy-rule/policy-rule.yaml`](schemas/policy-rule/policy-rule.yaml)
+  and [`docs/policy-rule.md`](docs/policy-rule.md).
+- **Policy bundle** — _published_ (`experimental`). The unit of policy
+  identity, versioning, scope, ownership, and rule grouping: `bundle_id`,
+  a `bundle_version` distinct from `schema_version`, `policy_owner`
+  (provenance only, never an authorization subject), an optional `scope`
+  (absent means globally applicable), and a non-empty `rules` array. No
+  self-attested `validation_status` field. See
+  [`schemas/policy-bundle/policy-bundle.yaml`](schemas/policy-bundle/policy-bundle.yaml)
+  and [`docs/policy-bundle.md`](docs/policy-bundle.md).
+
+These three publish a structured policy **data model**, not a policy
+language: no Rego, Cedar, CEL, Python, JavaScript, SQL, WASM, or custom DSL
+is chosen, and no executable policy expression, embedded code, or `script`
+field is published. Declare `depends_on: [contract-metadata]`,
+`depends_on: [contract-metadata, policy-condition,
+operation-aware-decision-request, reason-code, action-string,
+resource-identifier]`, and `depends_on: [contract-metadata, policy-rule]`
+respectively, and are additive and separate from the six-contract first
+wave and PR A/B/C's contracts; they do not extend or alter any of them.
+
 ---
 
 ## Repository layout
@@ -239,7 +280,10 @@ basis-schemas/
 │   ├── operation-aware-schema-readiness.md   second-wave (ADR-0005) plan and status
 │   ├── identity-evidence-reference.md        PR B companion doc
 │   ├── adapter-evidence-reference.md         PR B companion doc
-│   └── operation-aware-decision-request.md   PR C companion doc
+│   ├── operation-aware-decision-request.md   PR C companion doc
+│   ├── policy-condition.md                   PR D companion doc
+│   ├── policy-rule.md                        PR D companion doc
+│   └── policy-bundle.md                      PR D companion doc
 ├── schemas/
 │   ├── README.md                  directory structure and schema lifecycle
 │   ├── vocabulary/                published — vocabulary.yaml (experimental)
@@ -253,7 +297,10 @@ basis-schemas/
 │   ├── reason-code/               published — reason-code.yaml (experimental)
 │   ├── identity-evidence-reference/  published — identity-evidence-reference.yaml (experimental)
 │   ├── adapter-evidence-reference/   published — adapter-evidence-reference.yaml (experimental)
-│   └── operation-aware-decision-request/  published — operation-aware-decision-request.yaml (experimental)
+│   ├── operation-aware-decision-request/  published — operation-aware-decision-request.yaml (experimental)
+│   ├── policy-condition/          published — policy-condition.yaml (experimental)
+│   ├── policy-rule/               published — policy-rule.yaml (experimental)
+│   └── policy-bundle/             published — policy-bundle.yaml (experimental)
 ├── src/
 │   └── basis_schemas/             minimal package: repository metadata
 ├── tests/                         lightweight metadata and docs checks
@@ -277,6 +324,12 @@ basis-schemas/
   — the adapter evidence reference contract (PR B).
 - [`docs/operation-aware-decision-request.md`](docs/operation-aware-decision-request.md)
   — the operation-aware decision request contract (PR C).
+- [`docs/policy-condition.md`](docs/policy-condition.md) — the policy
+  condition contract (PR D).
+- [`docs/policy-rule.md`](docs/policy-rule.md) — the policy rule contract
+  (PR D).
+- [`docs/policy-bundle.md`](docs/policy-bundle.md) — the policy bundle
+  contract (PR D).
 - [`schemas/README.md`](schemas/README.md) — schema directory structure and
   lifecycle.
 
