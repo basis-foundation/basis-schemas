@@ -25,7 +25,7 @@ PR A — Shared Metadata and Vocabulary                    [published]
 PR B — Evidence Reference Contracts                      [published]
 PR C — Operation-Aware DecisionRequest                   [published]
 PR D — Policy Bundle and Rule Contracts                  [published]
-PR E — DecisionResponse and EvaluationTrace               [not started]
+PR E — DecisionResponse and EvaluationTrace               [published]
 PR F — Audit Evidence and GatewayAuditEvent               [not started]
 PR G — Compatibility Examples and Test Vectors            [not started]
 ```
@@ -428,14 +428,179 @@ exists yet; this section records expected dependency direction only, per
 ADR-0005 Section 6. PR D does not imply that basis-core consumes these
 policy contracts yet — no implementation repository does.
 
-## PRs E through G — not started
+## PR E — DecisionResponse and EvaluationTrace — published
 
-The remaining PRs (response and trace; audit evidence and gateway audit
-event; compatibility examples and test vectors) are not yet started. Each
-becomes ready for its own PR once the contracts it depends on, per ADR-0005
-Section 6, are published. This document will be updated as each PR lands,
-the same way [`migration-plan.md`](migration-plan.md) was updated across
-the first wave.
+PR E publishes the machine-readable response and trace contracts a future
+`basis-core` v0.2.0 will produce after deterministic operation-aware policy
+evaluation, against the request and policy contracts published by PR C and
+PR D:
+
+- **[Trace rule evidence](trace-rule-evidence.md)** —
+  `schemas/trace-rule-evidence/trace-rule-evidence.yaml`. The bounded,
+  deterministic explanation record for one policy rule considered during
+  evaluation: `rule_id` and `effect` reused unchanged from `policy-rule`, a
+  closed `rule_result` (`matched` / `not_matched` / `skipped` / `error`,
+  reproducing ADR-0003 Section 5 and Section 4's rule-evidence categories),
+  optional bounded `condition_results` (each a `condition_id` reused from
+  `policy-condition` plus a closed three-value `result`), and an optional
+  `reason_code` / `explanation`. Never copies a rule's match criteria or
+  conditions, and never carries a condition's `field_path` / `operator` /
+  `expected_value` or the raw value compared. Declares
+  `depends_on: [contract-metadata, policy-rule, policy-condition,
+  reason-code]`.
+- **[Evaluation trace](evaluation-trace.md)** —
+  `schemas/evaluation-trace/evaluation-trace.yaml`. The deterministic,
+  bounded explanation of one kernel evaluation: `trace_id` and `request_id`
+  identity, optional `correlation_id` passthrough, an applicable policy
+  bundle's `bundle_id` / `bundle_version` when one applied, a closed,
+  nullable `bundle_applicability` (`applicable` / `not_applicable` / `null`,
+  distinct from the final outcome per ADR-0002 Section 5), a closed,
+  nullable `outcome` kept structurally independent of a closed
+  `evaluation_status` (`completed` / `failed`) and a closed, six-value
+  `failure_reason`, a (possibly empty) `rule_evidence` array of
+  `trace-rule-evidence`-shaped values, and an optional `reason_code` /
+  `explanation`. **Required invariant: `outcome` is null if and only if
+  `evaluation_status` is `failed`.** Declares
+  `depends_on: [contract-metadata, operation-aware-decision-request,
+  policy-bundle, trace-rule-evidence, reason-code]`.
+- **[Operation-aware decision response](operation-aware-decision-response.md)**
+  — `schemas/operation-aware-decision-response/operation-aware-decision-response.yaml`.
+  The additive vNext response contract: `request_id` echoed from PR C's
+  request, the same `outcome` / `evaluation_status` / `failure_reason`
+  model as `evaluation-trace` (kept in parity), optional `bundle_id` /
+  `bundle_version` from PR D, an optional `trace_id` reference and/or
+  embedded `evaluation_trace`, and an optional `reason_code` /
+  `explanation`. **The existing first-wave `schemas/decision-response/
+  decision-response.yaml` is unchanged** — not renamed, replaced, widened,
+  or reinterpreted; this is a separate, additive vNext contract surface.
+  Declares `depends_on: [contract-metadata,
+  operation-aware-decision-request, policy-bundle, evaluation-trace,
+  reason-code]`.
+
+All three are published at contract version `0.1.0`, lifecycle
+`experimental`, in dependency order (`trace-rule-evidence` before
+`evaluation-trace` before `operation-aware-decision-response`), tracked in
+`basis_schemas.OPERATION_AWARE_RESPONSE_TRACE_CONTRACTS`.
+
+### Authorization outcomes
+
+`outcome` is closed to exactly `allow` / `deny` / `not_applicable` — the
+same vocabulary as the existing `decision-response` and `policy-rule`
+`effect` values — kept in parity across `evaluation-trace` and
+`operation-aware-decision-response` by this repository's test suite. No
+`error`, `failure`, or `invalid` value was added to this enum.
+
+### Evaluation failure separation
+
+Per ADR-0002 Section 14, a policy decision and an evaluation failure are
+never collapsed into one ambiguous field. `evaluation_status`
+(`completed` / `failed`) and `failure_reason` (a closed, six-value
+evaluator-failure vocabulary: `invalid_request`,
+`unsupported_schema_version`, `invalid_policy_bundle`,
+`policy_validation_failure`, `condition_evaluation_error`,
+`internal_evaluation_error`) are independent fields on both
+`evaluation-trace` and `operation-aware-decision-response`, with a required
+invariant enforced by both contracts' constraints and tested directly: a
+failed evaluation can never serialize a non-null `outcome`. This
+`failure_reason` vocabulary is new and distinct from the existing
+first-wave `decision-response`'s own four-value `failure_reason`
+(`malformed_request` / `policy_error` / `audit_error` / `internal_error`),
+which PR E does not modify, reinterpret, or extend.
+
+### Policy bundle/rule identity reuse
+
+`evaluation-trace` and `operation-aware-decision-response` both echo PR D's
+`policy-bundle.bundle_id` / `bundle_version` unchanged, and
+`trace-rule-evidence` echoes PR D's `policy-rule.rule_id` / `effect` and
+PR D's `policy-condition.condition_id` unchanged. No identifier or
+vocabulary is redefined; every reuse is parity-tested against the
+canonical PR D files.
+
+### Reason-code reuse
+
+`reason_code` (on all three PR E contracts, at both rule and condition
+level on `trace-rule-evidence`) reuses the `reason-code` contract's
+published pattern exactly. No new closed reason-code vocabulary is
+introduced by PR E.
+
+### Trace boundedness
+
+None of PR E's three contracts carry a full request snapshot, a full
+policy bundle, raw identity evidence, raw adapter evidence, raw protocol
+payloads, a condition's `field_path` / `operator` / `expected_value`, or
+the raw value a condition compared against. `trace-rule-evidence`'s
+`rule_result` and `condition_results.result` are the only mechanism for
+representing missing/unknown context; no separate top-level
+missing-context field was introduced, since ADR-0003 Section 4 names that
+category without settling a field-level vocabulary for it.
+
+### Redaction/security boundary
+
+None of PR E's three contracts define an `access_token`, `id_token`,
+`refresh_token`, `jwt`, `bearer_token`, `authorization_header`, `cookie`,
+`session_secret`, `client_secret`, `password`, `private_key`, `api_key`,
+`credential`, `raw_claims`, `raw_payload`, `raw_protocol_payload`,
+`full_request`, `request_snapshot`, `full_policy`, `policy_document`,
+`debug`, `exception`, `stack_trace`, `traceback`, `gateway_enforcement`,
+`enforcement_result`, `http_status`, or `response_status` field — enforced
+by regression tests. No `redaction_classification` field is published on
+any of the three: every value each contract carries is already a safe
+identifier, a closed vocabulary member, or a reason code.
+
+### Trace vs. audit distinction
+
+Per ADR-0003 Section 2, `evaluation-trace` is the kernel-produced
+explanation of one evaluation — it is not an immutable audit record, a
+gateway enforcement record, a policy-loading record, a session record, an
+identity-verification record, a protocol transaction log, a persistence
+format, or a compliance attestation. `AuditEvidence` and
+`GatewayAuditEvent` remain deferred to PR F, which will reference
+`evaluation-trace`'s `trace_id` and
+`operation-aware-decision-response`'s `request_id` rather than redefining
+either.
+
+### Compatibility posture
+
+Purely additive. PR E does not modify `decision-request`,
+`decision-response`, `audit-event`, `action-string`, `resource-identifier`,
+`contract-metadata`, `redaction-classification`, `reason-code`,
+`identity-evidence-reference`, `adapter-evidence-reference`,
+`operation-aware-decision-request`, `policy-condition`, `policy-rule`, or
+`policy-bundle` — their shapes, required fields, optional fields, examples,
+and validation behavior are all unchanged, and none is made to depend on
+PR E's new contracts. None of PR E's three contracts is mandatory
+anywhere; no implementation repository consumes them yet.
+
+### What PR E deliberately excludes
+
+Consistent with ADR-0005's own scope for PR E, this PR does not introduce
+or implement: `AuditEvidence` or `GatewayAuditEvent` (deferred to PR F); a
+compatibility-test-vector framework (deferred to PR G); a final, closed
+reason-code vocabulary; gateway fail-open/fail-closed runtime behavior; a
+final trace-ordering/priority model beyond "deterministic for identical
+input, not authorization precedence"; policy loading, evaluation, or
+enforcement behavior; identity token, JWT, OIDC, or session schemas; or
+protocol payload schemas.
+
+### How PR F will consume response/trace identifiers without redefining them
+
+PR F (audit evidence and `GatewayAuditEvent`) is expected to reference
+`evaluation-trace.trace_id`, `operation-aware-decision-response.request_id`,
+and PR D's `bundle_id` / `bundle_version`, the same way PR E's contracts
+already reference PR C's `request_id` and PR D's `bundle_id` /
+`bundle_version` / `rule_id`. Neither PR F nor PR G exists yet; this
+section records expected dependency direction only, per ADR-0005
+Section 6. PR E does not imply that `basis-core` consumes these response/
+trace contracts yet — no implementation repository does.
+
+## PRs F and G — not started
+
+The remaining PRs (audit evidence and gateway audit event; compatibility
+examples and test vectors) are not yet started. Each becomes ready for its
+own PR once the contracts it depends on, per ADR-0005 Section 6, are
+published. This document will be updated as each PR lands, the same way
+[`migration-plan.md`](migration-plan.md) was updated across the first
+wave.
 
 ## Relationship to the first wave
 
@@ -451,9 +616,10 @@ gets its own tracking tuple rather than sharing one: PR A's shared contracts
 are tracked in `basis_schemas.OPERATION_AWARE_SHARED_METADATA_CONTRACTS`, PR
 B's evidence-reference contracts in
 `basis_schemas.OPERATION_AWARE_EVIDENCE_REFERENCE_CONTRACTS`, PR C's
-request contract in `basis_schemas.OPERATION_AWARE_REQUEST_CONTRACTS`, and
-PR D's policy bundle/rule contracts in
-`basis_schemas.OPERATION_AWARE_POLICY_CONTRACTS`. This is one first wave
-plus one second wave organized into per-PR tracking groups — not five
-separate waves — so none of these tracking groups' completeness claims
-ever conflate.
+request contract in `basis_schemas.OPERATION_AWARE_REQUEST_CONTRACTS`, PR
+D's policy bundle/rule contracts in
+`basis_schemas.OPERATION_AWARE_POLICY_CONTRACTS`, and PR E's response/trace
+contracts in `basis_schemas.OPERATION_AWARE_RESPONSE_TRACE_CONTRACTS`.
+This is one first wave plus one second wave organized into per-PR tracking
+groups — not six separate waves — so none of these tracking groups'
+completeness claims ever conflate.

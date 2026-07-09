@@ -178,3 +178,40 @@ def test_operation_aware_policy_contracts_disjoint_from_pr_a_pr_b_and_pr_c() -> 
     assert not (pr_a & pr_d), f"contract names appear in both PR A and PR D: {pr_a & pr_d}"
     assert not (pr_b & pr_d), f"contract names appear in both PR B and PR D: {pr_b & pr_d}"
     assert not (pr_c & pr_d), f"contract names appear in both PR C and PR D: {pr_c & pr_d}"
+
+
+def test_operation_aware_response_trace_contracts_match_pr_e() -> None:
+    # The three response/trace contracts published by PR E of the
+    # operation-aware schema readiness plan (ADR-0005), in dependency-and-
+    # publication order.
+    assert basis_schemas.OPERATION_AWARE_RESPONSE_TRACE_CONTRACTS == (
+        "trace-rule-evidence",
+        "evaluation-trace",
+        "operation-aware-decision-response",
+    )
+
+
+def test_operation_aware_response_trace_contracts_do_not_extend_first_wave() -> None:
+    # PR E is additive and separate: it must not appear in, or change the
+    # length of, the first-wave six-contract tuples.
+    assert len(basis_schemas.PLANNED_CONTRACTS) == 6
+    assert len(basis_schemas.PUBLISHED_CONTRACTS) == 6
+    for contract in basis_schemas.OPERATION_AWARE_RESPONSE_TRACE_CONTRACTS:
+        assert contract not in basis_schemas.PLANNED_CONTRACTS
+        assert contract not in basis_schemas.PUBLISHED_CONTRACTS
+
+
+def test_operation_aware_response_trace_contracts_disjoint_from_pr_a_through_pr_d() -> None:
+    # PR E must never be conflated with PR A's shared metadata contracts,
+    # PR B's evidence-reference contracts, PR C's request contract, or
+    # PR D's policy contracts: no name should appear in more than one
+    # tracking tuple.
+    pr_a = set(basis_schemas.OPERATION_AWARE_SHARED_METADATA_CONTRACTS)
+    pr_b = set(basis_schemas.OPERATION_AWARE_EVIDENCE_REFERENCE_CONTRACTS)
+    pr_c = set(basis_schemas.OPERATION_AWARE_REQUEST_CONTRACTS)
+    pr_d = set(basis_schemas.OPERATION_AWARE_POLICY_CONTRACTS)
+    pr_e = set(basis_schemas.OPERATION_AWARE_RESPONSE_TRACE_CONTRACTS)
+    assert not (pr_a & pr_e), f"contract names appear in both PR A and PR E: {pr_a & pr_e}"
+    assert not (pr_b & pr_e), f"contract names appear in both PR B and PR E: {pr_b & pr_e}"
+    assert not (pr_c & pr_e), f"contract names appear in both PR C and PR E: {pr_c & pr_e}"
+    assert not (pr_d & pr_e), f"contract names appear in both PR D and PR E: {pr_d & pr_e}"

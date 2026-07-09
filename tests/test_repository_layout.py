@@ -33,6 +33,9 @@ def test_required_docs_exist() -> None:
         "docs/policy-condition.md",
         "docs/policy-rule.md",
         "docs/policy-bundle.md",
+        "docs/trace-rule-evidence.md",
+        "docs/evaluation-trace.md",
+        "docs/operation-aware-decision-response.md",
         "schemas/README.md",
     ]
     missing = [path for path in required if not (REPO_ROOT / path).is_file()]
@@ -117,6 +120,26 @@ def test_operation_aware_policy_contracts_are_disjoint_from_first_wave() -> None
     policy_wave = set(basis_schemas.OPERATION_AWARE_POLICY_CONTRACTS)
     assert not (first_wave & policy_wave), (
         f"contract names appear in both waves: {first_wave & policy_wave}"
+    )
+
+
+def test_operation_aware_response_trace_contracts_have_directories() -> None:
+    # PR E's response/trace contracts each have a real schema definition,
+    # mirroring the first-wave, PR A, PR B, PR C, and PR D invariants above.
+    for contract in basis_schemas.OPERATION_AWARE_RESPONSE_TRACE_CONTRACTS:
+        directory = REPO_ROOT / "schemas" / contract
+        assert directory.is_dir(), f"missing schema directory: {contract}"
+        schema_file = directory / f"{contract}.yaml"
+        assert schema_file.is_file(), f"missing schema file: {schema_file}"
+
+
+def test_operation_aware_response_trace_contracts_are_disjoint_from_first_wave() -> None:
+    # PR E must never be conflated with the first-wave six-contract migration:
+    # no name should appear in both tuples.
+    first_wave = set(basis_schemas.PLANNED_CONTRACTS)
+    response_trace_wave = set(basis_schemas.OPERATION_AWARE_RESPONSE_TRACE_CONTRACTS)
+    assert not (first_wave & response_trace_wave), (
+        f"contract names appear in both waves: {first_wave & response_trace_wave}"
     )
 
 

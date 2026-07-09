@@ -35,8 +35,13 @@ shapes those components exchange.
 > **adapter evidence reference** contracts (PR B), the **operation-aware
 > decision request** (PR C) — an additive vNext request contract — and the
 > **policy condition**, **policy rule**, and **policy bundle** contracts
-> (PR D) — a structured policy *data model*, not a policy language; the
-> first-wave **decision request** above remains published and unchanged. See
+> (PR D) — a structured policy *data model*, not a policy language — are now
+> published, along with that wave's **trace rule evidence**, **evaluation
+> trace**, and **operation-aware decision response** contracts (PR E), the
+> machine-readable response and trace shapes a future `basis-core` v0.2.0
+> will produce after deterministic operation-aware policy evaluation; the
+> first-wave **decision request** and **decision response** above remain
+> published and unchanged. See
 > [`docs/operation-aware-schema-readiness.md`](docs/operation-aware-schema-readiness.md).
 
 ---
