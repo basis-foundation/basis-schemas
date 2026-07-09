@@ -21,6 +21,13 @@ described in
 referenced below are defined in
 [`../docs/contract-governance.md`](../docs/contract-governance.md).
 
+A second wave has since added six further contracts — `contract-metadata`,
+`redaction-classification`, `reason-code` (PR A), `identity-evidence-reference`,
+`adapter-evidence-reference` (PR B), and now
+`operation-aware-decision-request` (PR C) — tracked separately in
+[`../docs/operation-aware-schema-readiness.md`](../docs/operation-aware-schema-readiness.md).
+They are additive; they do not extend or alter the six-contract first wave.
+
 ---
 
 ## Directory structure
@@ -39,17 +46,20 @@ schemas/
 ├── redaction-classification/    5-value redaction vocabulary         — PUBLISHED (redaction-classification.yaml)
 ├── reason-code/                 reason-code string format            — PUBLISHED (reason-code.yaml)
 ├── identity-evidence-reference/ safe reference to identity evidence  — PUBLISHED (identity-evidence-reference.yaml)
-└── adapter-evidence-reference/  safe reference to adapter evidence   — PUBLISHED (adapter-evidence-reference.yaml)
+├── adapter-evidence-reference/  safe reference to adapter evidence   — PUBLISHED (adapter-evidence-reference.yaml)
+└── operation-aware-decision-request/  additive vNext request shape  — PUBLISHED (operation-aware-decision-request.yaml)
 ```
 
 The first six directories are the first-wave contracts described above and in
-[`../docs/migration-plan.md`](../docs/migration-plan.md). The last five —
+[`../docs/migration-plan.md`](../docs/migration-plan.md). The last six —
 `contract-metadata`, `redaction-classification`, `reason-code`,
-`identity-evidence-reference`, and `adapter-evidence-reference` — are a
-second wave: shared foundation and evidence-reference contracts from
-`basis-architecture`'s operation-aware schema readiness plan (ADR-0005), PRs
-A and B respectively. They are not part of the first wave's six-contract
-count and do not extend it. See
+`identity-evidence-reference`, `adapter-evidence-reference`, and
+`operation-aware-decision-request` — are a second wave: shared foundation,
+evidence-reference, and request contracts from `basis-architecture`'s
+operation-aware schema readiness plan (ADR-0005), PRs A, B, and C
+respectively. They are not part of the first wave's six-contract count and
+do not extend it. `operation-aware-decision-request` is additive alongside
+`decision-request`, not a replacement for it. See
 [`../docs/operation-aware-schema-readiness.md`](../docs/operation-aware-schema-readiness.md).
 
 Every directory above now holds a real schema definition; no `PLACEHOLDER.md`

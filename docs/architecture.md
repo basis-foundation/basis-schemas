@@ -104,8 +104,18 @@ existing repositories and must not migrate here:
 - **Policy logic and authorization evaluation** — how rules are matched and
   decided — belong to `basis-core`. This repository may define the *shape* of a
   decision request; it must not define how the request is evaluated.
-- **Authentication** — token verification, subject derivation, identity at the
-  trust boundary — belong to `basis-gateway`.
+- **Identity establishment** — identity-provider integration, federation,
+  session handling, and BASIS-local identity-token issuance — belongs to
+  `basis-identity`. It produces the trusted identity context (and, per PR B,
+  the identity evidence reference) that other components consume; it does
+  not evaluate authorization.
+- **Identity verification at the enforcement boundary and request
+  assembly** — verifying accepted caller identity/token context as
+  configured, mapping trusted identity into authorization request context,
+  invoking `basis-core`, and enforcing decisions — belongs to
+  `basis-gateway`. `basis-core` never authenticates: it evaluates the
+  structured request it is given (Section 8 of the operation-aware
+  authorization model), it does not verify identity itself.
 - **Protocol translation** — turning BACnet, Modbus, OPC UA, and the rest into a
   normalized request — belongs to `basis-adapters`. This repository defines the
   normalized *output* shape, not protocol logic.
@@ -138,8 +148,9 @@ The ownership model above is not limited to the six first-wave contracts. As
 `basis-architecture`'s operation-aware schema readiness plan (ADR-0005,
 `docs/architecture/operation-aware-schema-readiness-plan.md`) publishes further
 contracts here — starting with the shared metadata and vocabulary contracts
-(PR A) and now the identity- and adapter-evidence-reference contracts (PR B)
-in [`operation-aware-schema-readiness.md`](operation-aware-schema-readiness.md)
+(PR A), the identity- and adapter-evidence-reference contracts (PR B), and
+now the operation-aware decision request (PR C) — see
+[`operation-aware-schema-readiness.md`](operation-aware-schema-readiness.md)
 — the same boundaries apply unchanged: `basis-architecture` decides the
 shape, `basis-schemas` publishes it, and implementations consume it. No new
 ownership model is introduced for the operation-aware contracts; they are
@@ -149,7 +160,11 @@ reference contracts in particular preserve the boundaries already stated:
 normalized adapter evidence, `basis-gateway` will assemble references into
 operation-aware requests and audit events, `basis-core` consumes references
 as request context without retrieving or interpreting raw evidence, and
-`basis-console` will display redacted reference metadata only.
+`basis-console` will display redacted reference metadata only. PR C's
+operation-aware decision request preserves the same evaluation boundary:
+`basis-gateway` assembles the request, `basis-core` evaluates it, and
+`basis-schemas` publishes only the shape — no implementation repository
+consumes PR C yet.
 
 ## Tooling rationale
 

@@ -117,3 +117,30 @@ def test_operation_aware_evidence_reference_contracts_disjoint_from_pr_a() -> No
     pr_a = set(basis_schemas.OPERATION_AWARE_SHARED_METADATA_CONTRACTS)
     pr_b = set(basis_schemas.OPERATION_AWARE_EVIDENCE_REFERENCE_CONTRACTS)
     assert not (pr_a & pr_b), f"contract names appear in both PR A and PR B: {pr_a & pr_b}"
+
+
+def test_operation_aware_request_contracts_match_pr_c() -> None:
+    # The one operation-aware request contract published by PR C of the
+    # operation-aware schema readiness plan (ADR-0005).
+    assert basis_schemas.OPERATION_AWARE_REQUEST_CONTRACTS == ("operation-aware-decision-request",)
+
+
+def test_operation_aware_request_contracts_do_not_extend_first_wave() -> None:
+    # PR C is additive and separate: it must not appear in, or change the
+    # length of, the first-wave six-contract tuples.
+    assert len(basis_schemas.PLANNED_CONTRACTS) == 6
+    assert len(basis_schemas.PUBLISHED_CONTRACTS) == 6
+    for contract in basis_schemas.OPERATION_AWARE_REQUEST_CONTRACTS:
+        assert contract not in basis_schemas.PLANNED_CONTRACTS
+        assert contract not in basis_schemas.PUBLISHED_CONTRACTS
+
+
+def test_operation_aware_request_contracts_disjoint_from_pr_a_and_pr_b() -> None:
+    # PR C must never be conflated with PR A's shared metadata contracts or
+    # PR B's evidence-reference contracts: no name should appear in more than
+    # one tracking tuple.
+    pr_a = set(basis_schemas.OPERATION_AWARE_SHARED_METADATA_CONTRACTS)
+    pr_b = set(basis_schemas.OPERATION_AWARE_EVIDENCE_REFERENCE_CONTRACTS)
+    pr_c = set(basis_schemas.OPERATION_AWARE_REQUEST_CONTRACTS)
+    assert not (pr_a & pr_c), f"contract names appear in both PR A and PR C: {pr_a & pr_c}"
+    assert not (pr_b & pr_c), f"contract names appear in both PR B and PR C: {pr_b & pr_c}"
