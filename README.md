@@ -32,7 +32,9 @@ shapes those components exchange.
 > classification**, and **reason code** — the shared foundation contracts from
 > `basis-architecture`'s operation-aware schema readiness plan (ADR-0005) — are
 > now published, along with that wave's **identity evidence reference** and
-> **adapter evidence reference** contracts (PR B). See
+> **adapter evidence reference** contracts (PR B) and the **operation-aware
+> decision request** (PR C) — an additive vNext request contract; the
+> first-wave **decision request** above remains published and unchanged. See
 > [`docs/operation-aware-schema-readiness.md`](docs/operation-aware-schema-readiness.md).
 
 ---
@@ -65,23 +67,37 @@ schemas, and the schemas depend on nothing else in the distribution.
 
 ## Publish, not invent
 
-`basis-schemas` exists to **formalize contracts that already exist** across the
-ecosystem — not to create new ones. Every contract published here is one that
-the implementation repositories already depend on in practice and that
-`basis-architecture` has already decided. The ownership model is:
+`basis-schemas` exists to **publish contracts `basis-architecture` has
+decided** — not to create new ones. That covers two related but distinct
+cases, both already represented in this repository:
+
+- **Migrating a shape implementation repositories already depend on in
+  practice** — the six first-wave contracts (vocabulary through audit-event)
+  formalized shapes `basis-core` and its peers were already using.
+- **Publishing a shape `basis-architecture` has approved ahead of
+  implementation adoption** — the operation-aware second-wave contracts
+  (PR A onward, including this repository's `operation-aware-decision-request`)
+  are published architecture-first, before any implementation repository
+  consumes them, so that `basis-gateway`, `basis-core` v0.2.0, and the rest
+  have a stable, reviewable target to build against.
+
+In both cases the ownership model is the same:
 
 ```text
-Architecture proposes.
+Architecture decides.
 Schemas publish.
-Implementations consume.
+Implementations consume — immediately or incrementally.
 ```
 
 A contract is reasoned about and decided in `basis-architecture` (in an
 architecture document or an ADR) before it becomes a schema. Once decided, its
 definition, version, and compatibility fixtures live here. Implementations
-import the published contract rather than re-declaring it. This repository never
-introduces vocabulary or semantics of its own; if a shape has not been decided
-in `basis-architecture`, it does not belong here yet.
+import the published contract rather than re-declaring it — whether they adopt
+it the same day or incrementally, at their own pace. What does not change
+between the two cases: this repository never introduces vocabulary or
+semantics of its own; if a shape has not been decided in `basis-architecture`,
+it does not belong here yet, regardless of whether an implementation
+repository is ready to consume it.
 
 ## First contracts
 
@@ -185,6 +201,30 @@ Both declare `depends_on: [contract-metadata, redaction-classification]` and
 are additive and separate from the six-contract first wave and from PR A's
 shared metadata contracts; they do not extend or alter either.
 
+Its third PR — the **operation-aware decision request** — is also now
+published:
+
+- **Operation-aware decision request** — _published_ (`experimental`). The
+  richer, additive vNext request contract a future `basis-core` v0.2.0
+  evaluates: `request_id`, `subject_id`, and `action` required; eighteen
+  further fields optional, including `subject_roles` / `subject_attrs`,
+  `identity_source` / `authority_mode` and an optional
+  `identity_evidence_reference`, `resource` / `resource_type`, `location`,
+  `device`, `protocol_context`, `operation_intent`, an optional
+  `adapter_evidence_reference`, `safety_context` / `environment_context` /
+  `risk_context`, `evaluation_time`, and `expected_policy_version`. See
+  [`schemas/operation-aware-decision-request/operation-aware-decision-request.yaml`](schemas/operation-aware-decision-request/operation-aware-decision-request.yaml)
+  and
+  [`docs/operation-aware-decision-request.md`](docs/operation-aware-decision-request.md).
+  The existing first-wave `decision-request` is **unchanged**: this is a
+  separate, additive contract, not a v2 of it.
+
+Declares `depends_on: [contract-metadata, action-string, resource-identifier,
+identity-evidence-reference, adapter-evidence-reference]` and is additive and
+separate from the six-contract first wave, PR A's shared metadata contracts,
+and PR B's evidence-reference contracts; it does not extend or alter any of
+them.
+
 ---
 
 ## Repository layout
@@ -198,7 +238,8 @@ basis-schemas/
 │   ├── migration-plan.md          first-wave migration order and what is deferred
 │   ├── operation-aware-schema-readiness.md   second-wave (ADR-0005) plan and status
 │   ├── identity-evidence-reference.md        PR B companion doc
-│   └── adapter-evidence-reference.md         PR B companion doc
+│   ├── adapter-evidence-reference.md         PR B companion doc
+│   └── operation-aware-decision-request.md   PR C companion doc
 ├── schemas/
 │   ├── README.md                  directory structure and schema lifecycle
 │   ├── vocabulary/                published — vocabulary.yaml (experimental)
@@ -211,7 +252,8 @@ basis-schemas/
 │   ├── redaction-classification/  published — redaction-classification.yaml (experimental)
 │   ├── reason-code/               published — reason-code.yaml (experimental)
 │   ├── identity-evidence-reference/  published — identity-evidence-reference.yaml (experimental)
-│   └── adapter-evidence-reference/   published — adapter-evidence-reference.yaml (experimental)
+│   ├── adapter-evidence-reference/   published — adapter-evidence-reference.yaml (experimental)
+│   └── operation-aware-decision-request/  published — operation-aware-decision-request.yaml (experimental)
 ├── src/
 │   └── basis_schemas/             minimal package: repository metadata
 ├── tests/                         lightweight metadata and docs checks
@@ -233,6 +275,8 @@ basis-schemas/
   — the identity evidence reference contract (PR B).
 - [`docs/adapter-evidence-reference.md`](docs/adapter-evidence-reference.md)
   — the adapter evidence reference contract (PR B).
+- [`docs/operation-aware-decision-request.md`](docs/operation-aware-decision-request.md)
+  — the operation-aware decision request contract (PR C).
 - [`schemas/README.md`](schemas/README.md) — schema directory structure and
   lifecycle.
 

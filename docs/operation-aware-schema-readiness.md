@@ -23,7 +23,7 @@ been published here, in what order, and what remains deferred.
 ```text
 PR A — Shared Metadata and Vocabulary                    [published]
 PR B — Evidence Reference Contracts                      [published]
-PR C — Operation-Aware DecisionRequest                   [not started]
+PR C — Operation-Aware DecisionRequest                   [published]
 PR D — Policy Bundle and Rule Contracts                  [not started]
 PR E — DecisionResponse and EvaluationTrace               [not started]
 PR F — Audit Evidence and GatewayAuditEvent               [not started]
@@ -160,26 +160,115 @@ Each of these belongs to a later PR in the order above, or remains owned by
 an implementation repository as already described in
 [`architecture.md`](architecture.md).
 
-### How PR C will consume these references
+### How PR C consumes these references
 
-PR C (the operation-aware `DecisionRequest`) is expected to add optional
-fields to the request shape that carry `identity-evidence-reference`- and
-`adapter-evidence-reference`-shaped values, so a request can cite the
-identity and adapter evidence that produced its context without embedding
-that evidence directly. This PR does not add those fields itself, and no
-implementation repository consumes `identity-evidence-reference` or
-`adapter-evidence-reference` yet; PR B publishes the reference shapes only,
-ahead of PR C needing them.
+PR C (the operation-aware `DecisionRequest`, published — see below) adds two
+optional fields, `identity_evidence_reference` and
+`adapter_evidence_reference`, shaped exactly as published by these two PR B
+contracts, so a request can cite the identity and adapter evidence that
+produced its context without embedding that evidence directly. PR C
+references these shapes rather than redefining or duplicating them. No
+implementation repository consumes `identity-evidence-reference`,
+`adapter-evidence-reference`, or `operation-aware-decision-request` yet; PR B
+and PR C publish shapes only, ahead of any implementation adoption.
 
-## PRs C through G — not started
+## PR C — Operation-Aware DecisionRequest — published
 
-The remaining PRs (the operation-aware decision request; policy bundle/rule
-contracts; response and trace; audit evidence and gateway audit event;
-compatibility examples and test vectors) are not yet started. Each becomes
-ready for its own PR once the contracts it depends on, per ADR-0005 Section
-6, are published. This document will be updated as each PR lands, the same
-way [`migration-plan.md`](migration-plan.md) was updated across the first
-wave.
+PR C publishes the richer, additive vNext request contract that a future
+`basis-core` v0.2.0 evaluates:
+
+- **[Operation-aware decision request](operation-aware-decision-request.md)**
+  — `schemas/operation-aware-decision-request/operation-aware-decision-request.yaml`.
+  Required: `request_id`, `subject_id`, `action`. Optional: `correlation_id`,
+  `subject_roles`, `subject_attrs`, `identity_source`, `authority_mode`,
+  `identity_evidence_reference`, `resource`, `resource_type`, `location`,
+  `device`, `protocol_context`, `operation_intent`,
+  `adapter_evidence_reference`, `safety_context`, `environment_context`,
+  `risk_context`, `evaluation_time`, `expected_policy_version`.
+
+Published at contract version `0.1.0`, lifecycle `experimental`. Declares
+`depends_on: [contract-metadata, action-string, resource-identifier,
+identity-evidence-reference, adapter-evidence-reference]`. Does not declare
+`reason-code` or `redaction-classification`: the request carries no
+`reason_code` field and no top-level `redaction_classification` field of its
+own (the nested evidence references already carry theirs).
+
+### Relationship to the first-wave `decision-request`
+
+`schemas/decision-request/decision-request.yaml` is **unchanged**: not
+renamed, replaced, widened, or reinterpreted, and its version, required
+fields, optional fields, examples, and validation behavior are all
+identical to before this PR. It remains the published v0.1-era request
+contract. `operation-aware-decision-request` is a separate, additive vNext
+contract surface, published alongside it, not superseding it.
+
+### Categories represented
+
+Every ADR-0001 Section 3 request-side category is represented: subject
+identity and attributes; identity source / authority mode; the identity
+evidence reference; action; resource and resource type; site/building/zone/
+area location; device identity and class; protocol and protocol operation;
+the adapter evidence reference; operation intent; safety, environment, and
+risk context; correlation ID; request ID; and expected policy version.
+
+### Evidence-reference usage
+
+`identity_evidence_reference` and `adapter_evidence_reference` are optional
+fields shaped exactly as published by PR B's two contracts — referenced, not
+duplicated or redefined. Their own `request_id` / `correlation_id`, when
+present, are provenance metadata; the parent request's own identifiers
+remain authoritative for the evaluation, with no automatic reconciliation
+between the two implemented by this static contract.
+
+### Compatibility posture
+
+Purely additive. No existing contract (`decision-request`,
+`decision-response`, `audit-event`, `action-string`, `resource-identifier`,
+`contract-metadata`, `redaction-classification`, `reason-code`,
+`identity-evidence-reference`, `adapter-evidence-reference`) changed shape,
+required fields, optional fields, examples, or validation behavior, and none
+was made to depend on this new contract. This contract is not mandatory
+anywhere; no implementation repository consumes it yet.
+
+### What PR C intentionally excludes
+
+Consistent with ADR-0005's scope for PR C, this PR does not introduce:
+
+- `PolicyBundle`, `PolicyRule`, or `PolicyCondition`
+- An operation-aware `DecisionResponse` or `EvaluationTrace` /
+  `TraceRuleEvidence`
+- `AuditEvidence` or `GatewayAuditEvent`
+- A final, closed reason-code vocabulary
+- Compatibility/test-vector fixtures (deferred to PR G)
+- Policy syntax, condition operators, evaluation behavior, or enforcement
+  behavior
+- Runtime request assembly or evidence retrieval (owned by `basis-gateway`,
+  `basis-identity`, `basis-adapters`)
+- Identity token, JWT, OIDC, or session schemas
+- Protocol payload schemas or protocol-specific operation objects
+- Topology discovery, audit storage, or policy loading
+
+### How PR D and PR E will build on this
+
+PR D (policy bundle and rule contracts) is expected to define match criteria
+that reference this request's categories — resource type, location, device
+class, protocol/operation evidence, operation intent, safety/environment/
+risk context — without this PR choosing a policy language or condition
+operator set. PR E (the operation-aware `DecisionResponse` and
+`EvaluationTrace`) is expected to echo this request's `request_id` the same
+way the first-wave `decision-response` echoes `decision-request`'s, and to
+reference the identity/adapter evidence this request optionally carries when
+explaining a trace. Neither PR D nor PR E exists yet; this section records
+expected dependency direction only, per ADR-0005 Section 6.
+
+## PRs D through G — not started
+
+The remaining PRs (policy bundle/rule contracts; response and trace; audit
+evidence and gateway audit event; compatibility examples and test vectors)
+are not yet started. Each becomes ready for its own PR once the contracts it
+depends on, per ADR-0005 Section 6, are published. This document will be
+updated as each PR lands, the same way
+[`migration-plan.md`](migration-plan.md) was updated across the first wave.
 
 ## Relationship to the first wave
 
@@ -189,8 +278,13 @@ decision-request, decision-response, audit-event — tracked in
 `basis_schemas.PLANNED_CONTRACTS` / `basis_schemas.PUBLISHED_CONTRACTS`) are
 unaffected by this second wave. The operation-aware contracts are an additive
 expansion — v0.1-era request/response behavior remains stable throughout, per
-ADR-0005 Section 7. The new shared contracts in PR A are tracked separately in
-`basis_schemas.OPERATION_AWARE_SHARED_METADATA_CONTRACTS`, and PR B's
-evidence-reference contracts are tracked separately again in
-`basis_schemas.OPERATION_AWARE_EVIDENCE_REFERENCE_CONTRACTS`, so none of the
-three waves' completeness claims ever conflate.
+ADR-0005 Section 7. Within the operation-aware second wave, each ordered PR
+(A through G, per [Section 5](#recommended-publication-order-per-adr-0005-section-5))
+gets its own tracking tuple rather than sharing one: PR A's shared contracts
+are tracked in `basis_schemas.OPERATION_AWARE_SHARED_METADATA_CONTRACTS`, PR
+B's evidence-reference contracts in
+`basis_schemas.OPERATION_AWARE_EVIDENCE_REFERENCE_CONTRACTS`, and PR C's
+request contract in `basis_schemas.OPERATION_AWARE_REQUEST_CONTRACTS`. This
+is one first wave plus one second wave organized into per-PR tracking
+groups — not four separate waves — so none of these tracking groups'
+completeness claims ever conflate.

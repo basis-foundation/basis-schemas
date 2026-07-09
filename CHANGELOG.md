@@ -12,6 +12,56 @@ contract versions and lifecycle states follow
 
 ### Added
 
+- **Operation-aware decision request contract published** (second-wave,
+  PR C of `basis-architecture`'s operation-aware schema readiness plan,
+  ADR-0005).
+  `schemas/operation-aware-decision-request/operation-aware-decision-request.yaml`
+  publishes the richer, additive vNext request shape a future `basis-core`
+  v0.2.0 evaluates, formalizing the conceptual categories named in ADR-0001
+  (`docs/architecture/operation-aware-authorization-model.md`, Section 3).
+  Contract version `0.1.0`, lifecycle `experimental`. Required:
+  `request_id`, `subject_id`, `action`. Optional: `correlation_id`,
+  `subject_roles`, `subject_attrs`, `identity_source`, `authority_mode`, an
+  `identity_evidence_reference`, `resource`, `resource_type`, `location`
+  (`site_id` / `building_id` / `zone_id` / `area_id`), `device` (`device_id`
+  / `device_class`), `protocol_context` (`protocol` / `operation`), a closed
+  `operation_intent` (`read_only` / `state_changing` / `control_affecting`),
+  an `adapter_evidence_reference`, `safety_context` (`mode` /
+  `classification` / `constraint_ids`), `environment_context` (`mode` /
+  `condition_ids`), `risk_context` (`classification` / `score`),
+  `evaluation_time`, and `expected_policy_version`. Declares `depends_on:
+  [contract-metadata, action-string, resource-identifier,
+  identity-evidence-reference, adapter-evidence-reference]`. Never carries an
+  `access_token`, `id_token`, `refresh_token`, `jwt`, `bearer_token`,
+  `authorization_header`, `cookie`, `session_secret`, `client_secret`,
+  `password`, `private_key`, `api_key`, `raw_claims`, `full_claim_set`,
+  `raw_payload`, `raw_protocol_payload`, `packet`, `frame`, or
+  `device_secret` field, anywhere top-level or nested — any such field is
+  rejected as unknown. **The existing `schemas/decision-request/decision-request.yaml`
+  is unchanged**: not renamed, replaced, widened, or reinterpreted; this is
+  a separate, additive vNext contract surface, not a v2. Notable
+  compatibility choices, documented in
+  `docs/operation-aware-decision-request.md`: only three fields are
+  required (unlike `decision-request`'s four — `evaluation_time` is
+  optional here, where `decision-request` requires `timestamp`); the
+  canonical resource identifier field is named `resource` rather than
+  `resource_id` to sit beside the new explicit `resource_type` field;
+  `operation_intent` is closed to three values because ADR-0001 names them
+  consistently, unlike the deliberately open `reason-code`; and
+  `decision-request`'s free-form `context` map is not retained, in favor of
+  the new explicit structured fields. Does not define request assembly,
+  evaluation, evidence retrieval, or enforcement; no implementation
+  repository consumes this contract yet. `docs/operation-aware-decision-request.md`
+  added.
+- `basis_schemas.OPERATION_AWARE_REQUEST_CONTRACTS` metadata listing PR C's
+  one contract. Additive: does not change `PLANNED_CONTRACTS`,
+  `PUBLISHED_CONTRACTS`, `OPERATION_AWARE_SHARED_METADATA_CONTRACTS`, or
+  `OPERATION_AWARE_EVIDENCE_REFERENCE_CONTRACTS`.
+  `docs/operation-aware-schema-readiness.md` updated: PR C marked published,
+  with a section describing the contract published, its dependencies, its
+  relationship to the first-wave `decision-request`, the categories
+  represented, evidence-reference usage, compatibility posture, what PR C
+  intentionally excludes, and how PR D and PR E are expected to build on it.
 - **Identity evidence reference contract published** (second-wave, PR B of
   `basis-architecture`'s operation-aware schema readiness plan, ADR-0005).
   `schemas/identity-evidence-reference/identity-evidence-reference.yaml`
@@ -87,13 +137,13 @@ contract versions and lifecycle states follow
   only the original six-contract first wave.
 
 PR A's three contracts are shared foundation building blocks only; PR B's two
-contracts (above) are evidence-reference building blocks. Together they do
-not introduce the operation-aware `DecisionRequest`/`DecisionResponse`,
-`PolicyBundle`/`PolicyRule`/`PolicyCondition`, `EvaluationTrace`/
-`TraceRuleEvidence`, `AuditEvidence`/`GatewayAuditEvent`, a final reason-code
-vocabulary, or compatibility/test-vector fixtures — each is deferred to a
-later PR (C through G) per ADR-0005 and
-`docs/operation-aware-schema-readiness.md`.
+contracts are evidence-reference building blocks; PR C's one contract
+(above) is the operation-aware `DecisionRequest`. Together they do not
+introduce the operation-aware `DecisionResponse`, `PolicyBundle`/
+`PolicyRule`/`PolicyCondition`, `EvaluationTrace`/`TraceRuleEvidence`,
+`AuditEvidence`/`GatewayAuditEvent`, a final reason-code vocabulary, or
+compatibility/test-vector fixtures — each is deferred to a later PR (D
+through G) per ADR-0005 and `docs/operation-aware-schema-readiness.md`.
 
 ## [0.1.0] - 2026-06-28
 

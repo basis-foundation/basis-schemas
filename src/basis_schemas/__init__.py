@@ -25,6 +25,12 @@ contracts — ``identity-evidence-reference`` and ``adapter-evidence-reference``
 they are additive publications, not an extension of the first-wave six-contract
 count.
 
+PR C of that same second wave has since published the operation-aware
+decision request — ``operation-aware-decision-request`` — tracked separately
+again, in ``OPERATION_AWARE_REQUEST_CONTRACTS`` below, for the same reason:
+it is an additive publication alongside the unchanged first-wave
+``decision-request``, not a replacement for it.
+
 This package does **not** define, validate, or implement any contract. Contracts
 are decided in ``basis-architecture`` and published, once migrated, under the
 ``schemas/`` directory.
@@ -42,6 +48,7 @@ __all__ = [
     "CONTRACT_STATES",
     "OPERATION_AWARE_SHARED_METADATA_CONTRACTS",
     "OPERATION_AWARE_EVIDENCE_REFERENCE_CONTRACTS",
+    "OPERATION_AWARE_REQUEST_CONTRACTS",
     "is_phase1_foundation",
 ]
 
@@ -112,6 +119,18 @@ OPERATION_AWARE_EVIDENCE_REFERENCE_CONTRACTS: Final[tuple[str, ...]] = (
     "identity-evidence-reference",
     "adapter-evidence-reference",
 )
+
+#: The operation-aware decision request contract published by PR C of the
+#: operation-aware schema readiness plan (``basis-architecture`` ADR-0005,
+#: "PR C — Operation-Aware DecisionRequest"). This is the richer, additive
+#: vNext request shape a future ``basis-core`` v0.2.0 evaluates; it does not
+#: replace or modify the existing first-wave ``decision-request`` in
+#: ``PLANNED_CONTRACTS`` / ``PUBLISHED_CONTRACTS``. Like
+#: ``OPERATION_AWARE_SHARED_METADATA_CONTRACTS`` and
+#: ``OPERATION_AWARE_EVIDENCE_REFERENCE_CONTRACTS`` above, this is a
+#: separate, additive tracking tuple. See
+#: ``docs/operation-aware-schema-readiness.md``.
+OPERATION_AWARE_REQUEST_CONTRACTS: Final[tuple[str, ...]] = ("operation-aware-decision-request",)
 
 
 def is_phase1_foundation() -> bool:
