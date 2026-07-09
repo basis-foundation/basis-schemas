@@ -12,6 +12,125 @@ contract versions and lifecycle states follow
 
 ### Added
 
+- **Response and trace contracts published** (second-wave, PR E of
+  `basis-architecture`'s operation-aware schema readiness plan, ADR-0005).
+  Publishes the machine-readable response and trace shapes a future
+  `basis-core` v0.2.0 will produce after deterministic operation-aware
+  policy evaluation, per ADR-0002
+  (`docs/architecture/operation-aware-evaluation-semantics.md`) and ADR-0003
+  (`docs/architecture/operation-aware-trace-audit-evidence.md`). Three
+  contracts, in dependency order:
+  - `schemas/trace-rule-evidence/trace-rule-evidence.yaml` — the bounded,
+    deterministic explanation record for one policy rule considered during
+    evaluation: `rule_id` and `effect` reused unchanged from `policy-rule`,
+    a closed `rule_result` (`matched` / `not_matched` / `skipped` /
+    `error`, reproducing ADR-0003 Section 5's "Match / no-match / error"
+    and Section 4's skipped-rule category), optional bounded
+    `condition_results` (each a `condition_id` reused from
+    `policy-condition` plus a closed three-value `result` reproducing
+    ADR-0002 Section 9's three condition outcomes), and an optional
+    `reason_code` (reusing `reason-code` unchanged) / static
+    `explanation`. Never copies a rule's match criteria or conditions, and
+    never carries a condition's `field_path`, `operator`, `expected_value`,
+    or the raw value compared. Contract version `0.1.0`, lifecycle
+    `experimental`. Declares `depends_on: [contract-metadata, policy-rule,
+    policy-condition, reason-code]`.
+  - `schemas/evaluation-trace/evaluation-trace.yaml` — the deterministic,
+    bounded explanation of one kernel evaluation: `trace_id` and
+    `request_id` identity, optional `correlation_id` passthrough, an
+    applicable policy bundle's `bundle_id` / `bundle_version` (reused
+    unchanged from `policy-bundle`) when one applied, a closed, nullable
+    `bundle_applicability` (`applicable` / `not_applicable` / `null`,
+    distinct from the final outcome per ADR-0002 Section 5's
+    `NOT_APPLICABLE` semantics), a closed, nullable `outcome`
+    (`allow` / `deny` / `not_applicable` / `null`, matching
+    `decision-response`'s outcome vocabulary exactly — no new outcome
+    value introduced) kept structurally independent of a closed
+    `evaluation_status` (`completed` / `failed`) and a closed, new
+    six-value `failure_reason` (`invalid_request` /
+    `unsupported_schema_version` / `invalid_policy_bundle` /
+    `policy_validation_failure` / `condition_evaluation_error` /
+    `internal_evaluation_error`, reproducing ADR-0002 Section 14's
+    representative evaluation-failure categories — distinct from, and
+    never conflated with, the existing first-wave `decision-response`'s
+    own four-value `failure_reason`), a (possibly empty) `rule_evidence`
+    array of `trace-rule-evidence`-shaped values with trace-level
+    `rule_id` uniqueness, and an optional `reason_code` / `explanation`.
+    **Required invariant, enforced and tested: `outcome` is null if and
+    only if `evaluation_status` is `failed`** — a failed evaluation never
+    serializes an authorization outcome (ADR-0002 Section 14). Contract
+    version `0.1.0`, lifecycle `experimental`. Declares
+    `depends_on: [contract-metadata, operation-aware-decision-request,
+    policy-bundle, trace-rule-evidence, reason-code]`.
+  - `schemas/operation-aware-decision-response/operation-aware-decision-response.yaml`
+    — the additive vNext response contract: `request_id` echoed from PR
+    C's `operation-aware-decision-request`, the identical
+    `outcome` / `evaluation_status` / `failure_reason` model as
+    `evaluation-trace` (kept in parity, same required invariant), optional
+    `bundle_id` / `bundle_version` from `policy-bundle`, an optional
+    `trace_id` reference and/or embedded `evaluation_trace` — when both
+    are present, `evaluation_trace.trace_id` must equal `trace_id`, and
+    when `evaluation_trace` is present its `request_id` /
+    `evaluation_status` / `outcome` must agree with the response's own
+    (documented invariants, tested against the contract's own examples,
+    not statically enforceable in YAML) — and an optional `reason_code` /
+    `explanation`. **The existing `schemas/decision-response/
+    decision-response.yaml` is unchanged**: not renamed, replaced,
+    widened, or reinterpreted; this is a separate, additive vNext contract
+    surface, not a v2. Contract version `0.1.0`, lifecycle `experimental`.
+    Declares `depends_on: [contract-metadata,
+    operation-aware-decision-request, policy-bundle, evaluation-trace,
+    reason-code]`.
+  `docs/trace-rule-evidence.md`, `docs/evaluation-trace.md`, and
+  `docs/operation-aware-decision-response.md` added. Cross-contract parity
+  is enforced by tests: `trace-rule-evidence`'s reproduced `effect_values`
+  are tested against `policy-rule`'s own already-verified copy;
+  `evaluation-trace`'s reproduced `bundle_version_pattern` is tested
+  against `policy-bundle`'s own pattern; all three contracts' reproduced
+  `reason_code_pattern` is tested against the canonical `reason-code`
+  contract; and the `outcome_values` / `evaluation_status_values` /
+  `failure_reason_values` vocabularies are tested for exact agreement
+  between `evaluation-trace` and `operation-aware-decision-response`.
+  Every contract sets `additional_properties: false` at every object level
+  and never carries an `access_token`, `id_token`, `refresh_token`, `jwt`,
+  `bearer_token`, `authorization_header`, `cookie`, `session_secret`,
+  `client_secret`, `password`, `private_key`, `api_key`, `credential`,
+  `raw_claims`, `full_claim_set`, `raw_payload`, `raw_protocol_payload`,
+  `full_request`, `request_snapshot`, `full_policy`, `policy_document`,
+  `debug`, `exception`, `stack_trace`, `traceback`, `gateway_enforcement`,
+  `enforcement_result`, `http_status`, or `response_status` field — any
+  such field is rejected as unknown, enforced by regression tests. Does
+  not implement rule matching, condition evaluation, deny precedence,
+  default deny, evaluation, persistence, gateway enforcement, or audit —
+  every one of these remains explicitly deferred. Evaluation trace is
+  explicitly not audit evidence (ADR-0003 Section 2): `AuditEvidence` and
+  `GatewayAuditEvent` remain deferred to PR F, which is expected to
+  reference `evaluation-trace.trace_id` and
+  `operation-aware-decision-response.request_id` rather than redefining
+  either. No existing contract (`decision-request`, `decision-response`,
+  `audit-event`, `action-string`, `resource-identifier`,
+  `contract-metadata`, `redaction-classification`, `reason-code`,
+  `identity-evidence-reference`, `adapter-evidence-reference`,
+  `operation-aware-decision-request`, `policy-condition`, `policy-rule`,
+  `policy-bundle`) changed shape, required fields, optional fields,
+  examples, or validation behavior, and none was made to depend on these
+  three new contracts. Not mandatory anywhere; no implementation
+  repository consumes PR E yet.
+- `basis_schemas.OPERATION_AWARE_RESPONSE_TRACE_CONTRACTS` metadata listing
+  PR E's three contracts in dependency-and-publication order. Additive:
+  does not change `PLANNED_CONTRACTS`, `PUBLISHED_CONTRACTS`,
+  `OPERATION_AWARE_SHARED_METADATA_CONTRACTS`,
+  `OPERATION_AWARE_EVIDENCE_REFERENCE_CONTRACTS`,
+  `OPERATION_AWARE_REQUEST_CONTRACTS`, or
+  `OPERATION_AWARE_POLICY_CONTRACTS`.
+  `docs/operation-aware-schema-readiness.md` updated: PR E marked
+  published, with a section describing the contracts published, their
+  dependency order, authorization outcomes, evaluation-failure separation,
+  policy bundle/rule identity reuse, reason-code reuse, trace boundedness,
+  the redaction/security boundary, the trace-vs-audit distinction,
+  compatibility posture, what PR E deliberately excludes, and how PR F is
+  expected to consume PR E's identifiers without redefining them.
+
 - **Policy bundle and rule contracts published** (second-wave, PR D of
   `basis-architecture`'s operation-aware schema readiness plan, ADR-0005).
   Publishes the machine-readable policy model a future `basis-core` v0.2.0

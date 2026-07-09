@@ -39,6 +39,15 @@ additive publications, not an extension of the first-wave six-contract count,
 of PR A's shared metadata contracts, of PR B's evidence-reference contracts,
 or of PR C's request contract.
 
+PR E of that same second wave has since published the response and trace
+contracts — ``trace-rule-evidence``, ``evaluation-trace``, and
+``operation-aware-decision-response``, in dependency order — tracked
+separately again, in ``OPERATION_AWARE_RESPONSE_TRACE_CONTRACTS`` below,
+for the same reason: they are additive publications, not an extension of
+the first-wave six-contract count, of PR A's shared metadata contracts, of
+PR B's evidence-reference contracts, of PR C's request contract, or of
+PR D's policy contracts.
+
 This package does **not** define, validate, or implement any contract. Contracts
 are decided in ``basis-architecture`` and published, once migrated, under the
 ``schemas/`` directory.
@@ -58,6 +67,7 @@ __all__ = [
     "OPERATION_AWARE_EVIDENCE_REFERENCE_CONTRACTS",
     "OPERATION_AWARE_REQUEST_CONTRACTS",
     "OPERATION_AWARE_POLICY_CONTRACTS",
+    "OPERATION_AWARE_RESPONSE_TRACE_CONTRACTS",
     "is_phase1_foundation",
 ]
 
@@ -157,6 +167,28 @@ OPERATION_AWARE_POLICY_CONTRACTS: Final[tuple[str, ...]] = (
     "policy-condition",
     "policy-rule",
     "policy-bundle",
+)
+
+#: The response and trace contracts published by PR E of the operation-aware
+#: schema readiness plan (``basis-architecture`` ADR-0005, "PR E —
+#: DecisionResponse and EvaluationTrace"), in dependency-and-publication
+#: order: the bounded per-rule trace-evidence shape; the deterministic,
+#: bounded evaluation-trace shape that collects it; and the additive vNext
+#: response shape that echoes the operation-aware request and optionally
+#: references or embeds the trace. Like
+#: ``OPERATION_AWARE_SHARED_METADATA_CONTRACTS``,
+#: ``OPERATION_AWARE_EVIDENCE_REFERENCE_CONTRACTS``,
+#: ``OPERATION_AWARE_REQUEST_CONTRACTS``, and
+#: ``OPERATION_AWARE_POLICY_CONTRACTS`` above, this is a separate, additive
+#: tracking tuple: it does not extend ``PLANNED_CONTRACTS`` /
+#: ``PUBLISHED_CONTRACTS``, which continue to track only the original
+#: six-contract first wave. The existing first-wave ``decision-response`` is
+#: unchanged and is not part of this tuple. See
+#: ``docs/operation-aware-schema-readiness.md``.
+OPERATION_AWARE_RESPONSE_TRACE_CONTRACTS: Final[tuple[str, ...]] = (
+    "trace-rule-evidence",
+    "evaluation-trace",
+    "operation-aware-decision-response",
 )
 
 

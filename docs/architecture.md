@@ -149,8 +149,9 @@ The ownership model above is not limited to the six first-wave contracts. As
 `docs/architecture/operation-aware-schema-readiness-plan.md`) publishes further
 contracts here — starting with the shared metadata and vocabulary contracts
 (PR A), the identity- and adapter-evidence-reference contracts (PR B), the
-operation-aware decision request (PR C), and now the policy bundle and rule
-contracts (PR D) — see
+operation-aware decision request (PR C), the policy bundle and rule
+contracts (PR D), and now the trace rule evidence, evaluation trace, and
+operation-aware decision response contracts (PR E) — see
 [`operation-aware-schema-readiness.md`](operation-aware-schema-readiness.md)
 — the same boundaries apply unchanged: `basis-architecture` decides the
 shape, `basis-schemas` publishes it, and implementations consume it. No new
@@ -183,6 +184,23 @@ policy language: no policy language (Rego, Cedar, CEL, Python, JavaScript,
 SQL, WASM, or a custom DSL) is chosen, and no executable policy expression,
 embedded code, or `script` field is published. No implementation repository
 consumes PR D yet.
+
+PR E's response and trace contracts (`trace-rule-evidence`,
+`evaluation-trace`, `operation-aware-decision-response`) preserve the same
+boundaries again, restated at the evaluation-explanation level per
+ADR-0002 Section 15 and ADR-0003 Section 14: `basis-architecture` defines
+decision and trace semantics; `basis-schemas` publishes the response and
+trace shapes only; a future `basis-core` v0.2.0 evaluates requests and
+produces the decision response and evaluation trace; a future
+`basis-gateway` invokes `basis-core`, enforces valid decisions (including
+fail-open/fail-closed behavior on evaluation failure, which this repository
+does not decide), and later emits its own gateway audit event (PR F);
+`basis-console` may later display safe decision explanations and trace
+information but is never authoritative; `basis-identity` does not evaluate
+authorization policy; `basis-adapters` do not evaluate or enforce
+authorization policy. Evaluation trace is explicitly not audit evidence
+(ADR-0003 Section 2): `AuditEvidence` and `GatewayAuditEvent` remain
+deferred to PR F. No implementation repository consumes PR E yet.
 
 ## Tooling rationale
 
