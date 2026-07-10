@@ -150,8 +150,9 @@ The ownership model above is not limited to the six first-wave contracts. As
 contracts here — starting with the shared metadata and vocabulary contracts
 (PR A), the identity- and adapter-evidence-reference contracts (PR B), the
 operation-aware decision request (PR C), the policy bundle and rule
-contracts (PR D), and now the trace rule evidence, evaluation trace, and
-operation-aware decision response contracts (PR E) — see
+contracts (PR D), the trace rule evidence, evaluation trace, and
+operation-aware decision response contracts (PR E), and now the audit
+evidence and gateway audit event contracts (PR F) — see
 [`operation-aware-schema-readiness.md`](operation-aware-schema-readiness.md)
 — the same boundaries apply unchanged: `basis-architecture` decides the
 shape, `basis-schemas` publishes it, and implementations consume it. No new
@@ -201,6 +202,31 @@ authorization policy; `basis-adapters` do not evaluate or enforce
 authorization policy. Evaluation trace is explicitly not audit evidence
 (ADR-0003 Section 2): `AuditEvidence` and `GatewayAuditEvent` remain
 deferred to PR F. No implementation repository consumes PR E yet.
+
+PR F's audit contracts (`audit-evidence`, `gateway-audit-event`) preserve
+the same boundaries again, restated at the audit-evidence-assembly level
+per ADR-0003 Section 14: `basis-architecture` defines audit semantics,
+evidence boundaries, and assembly ownership; `basis-schemas` publishes the
+audit contract shapes only; a future `basis-core` v0.2.0 produces
+`audit-evidence` as an associated evaluation artifact alongside its
+decision response and evaluation trace — not embedded in
+`operation-aware-decision-response`, and with no runtime transport,
+envelope, return tuple, or delivery mechanism defined by this PR
+(kernel-side evidence it does not itself persist durably); a future
+`basis-gateway` consumes the kernel
+result, enforces it or fails closed, and assembles `gateway-audit-event`
+by combining the referenced `audit-evidence` with its own enforcement
+facts (`enforcement_action`, `gateway_id`, `gateway_failure_reason`) —
+facts the kernel structurally cannot know; `basis-console` may later
+display authorized, redacted audit information but is not the audit
+authority; `basis-identity` establishes trusted identity context but does
+not evaluate authorization policy; `basis-adapters` normalize OT
+operations but do not evaluate or enforce authorization policy. This
+repository does not implement audit persistence, retention, signing,
+tamper-evidence, or gateway enforcement — see
+[`operation-aware-schema-readiness.md`](operation-aware-schema-readiness.md),
+"PR F," for the full boundary. No implementation repository consumes PR F
+yet.
 
 ## Tooling rationale
 

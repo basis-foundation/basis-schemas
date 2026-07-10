@@ -12,6 +12,131 @@ contract versions and lifecycle states follow
 
 ### Added
 
+- **Audit contracts published** (second-wave, PR F of
+  `basis-architecture`'s operation-aware schema readiness plan, ADR-0005).
+  Publishes the bounded, durable, audit-oriented evidence shape and the
+  gateway-emitted enforcement-boundary event shape named by ADR-0003
+  (`docs/architecture/operation-aware-trace-audit-evidence.md`). Two
+  contracts, in dependency order:
+  - `schemas/audit-evidence/audit-evidence.yaml` — the bounded, durable
+    evidence representation of one operation-aware authorization
+    evaluation: `evidence_id` and `request_id` identity, optional
+    `correlation_id` / `trace_id` association, the identical
+    `evaluation_status` / `outcome` / `failure_reason` model reused
+    unchanged from `operation-aware-decision-response` and
+    `evaluation-trace` (parity-tested, same required invariant), optional
+    `bundle_id` / `bundle_version` from `policy-bundle`, a bounded
+    `matched_rule_ids` array of stable rule identifiers (never a full
+    per-rule trace), optional `identity_evidence_reference` /
+    `adapter_evidence_reference` reused unchanged from PR B, an optional
+    `reason_code` / `explanation`, a required `recorded_at` timestamp
+    distinct from any request-supplied `evaluation_time`, and an optional
+    instance-level `schema_version`. This is the kernel-side audit
+    evidence ADR-0003 Section 14 names `basis-core` as producing as an
+    associated evaluation artifact alongside the decision response and
+    evaluation trace — not embedded in `operation-aware-decision-response`
+    (which has no `audit_evidence`/`audit_evidence_id` field), with no
+    runtime transport, envelope, return tuple, or delivery mechanism
+    defined by this PR; not persisted by `basis-core` anywhere durable,
+    and not assembled by `basis-gateway` (that is `gateway-audit-event`'s
+    role — see below). Contract version `0.1.0`, lifecycle `experimental`.
+    Declares `depends_on: [contract-metadata,
+    operation-aware-decision-response, evaluation-trace, policy-bundle,
+    identity-evidence-reference, adapter-evidence-reference,
+    reason-code]`.
+  - `schemas/gateway-audit-event/gateway-audit-event.yaml` — the bounded,
+    gateway-emitted record of what happened at the enforcement boundary
+    for one event: `event_id` and a closed `event_type`
+    (`gateway_authorization`, the smallest safe representation for this
+    PR), a required emission `timestamp` distinct from `audit-evidence`'s
+    own `recorded_at`, `request_id` / optional `correlation_id` (no
+    `subject_id` / `action` / `resource` / `resource_type` field — per
+    ADR-0003 Section 6, this contract avoids duplicating the evaluated
+    request), the identical kernel `evaluation_status` / `outcome` /
+    `failure_reason` model reused unchanged (parity-tested), optional
+    `bundle_id` / `bundle_version` / `trace_id`, a required
+    `audit_evidence_id` reference to the associated `audit-evidence`
+    record (referenced, never embedded), an optional `gateway_id`, a
+    closed `enforcement_action` (`allow` / `deny`) kept structurally
+    independent of the kernel `outcome` — `enforcement_action: deny` is
+    valid and expected alongside kernel `outcome: not_applicable` and
+    alongside `evaluation_status: failed`, representing fail-closed
+    gateway behavior without ever rewriting the kernel value — and an
+    optional, small, closed `gateway_failure_reason`
+    (`gateway_timeout` / `upstream_unavailable` /
+    `audit_assembly_failure` / `internal_gateway_error`) distinct in name
+    and meaning from the kernel `failure_reason`, required to pair with
+    `enforcement_action: deny` when non-null. This is the record
+    ADR-0003 Section 14 names `basis-gateway` as assembling by "combining
+    kernel evidence with enforcement facts." Contract version `0.1.0`,
+    lifecycle `experimental`. Declares
+    `depends_on: [contract-metadata, operation-aware-decision-response,
+    evaluation-trace, policy-bundle, audit-evidence, reason-code]`.
+  `docs/audit-evidence.md` and `docs/gateway-audit-event.md` added.
+  Cross-contract parity is enforced by tests: both contracts' reproduced
+  `outcome_values` / `evaluation_status_values` / `failure_reason_values`
+  are tested for exact agreement with `operation-aware-decision-response`
+  and `evaluation-trace`; both contracts' `bundle_version_pattern` and
+  `reason_code_pattern` are tested against their canonical source
+  contracts. State-matrix cross-object invariants are tested directly:
+  kernel `outcome: not_applicable` paired with gateway
+  `enforcement_action: deny`; kernel `evaluation_status: failed` paired
+  with `enforcement_action: deny`; a gateway-local failure (kernel
+  completed/allow, `gateway_failure_reason` set, `enforcement_action:
+  deny`) demonstrating `enforcement_action` independence from kernel
+  outcome; and `gateway_failure_reason` rejected whenever paired with
+  `enforcement_action: allow`. Every contract sets
+  `additional_properties: false` at every object level and never carries
+  an `access_token`, `id_token`, `refresh_token`, `jwt`, `bearer_token`,
+  `authorization_header`, `cookie`, `session_secret`, `client_secret`,
+  `password`, `private_key`, `api_key`, `credential`, `raw_claims`,
+  `full_claim_set`, `raw_payload`, `raw_protocol_payload`, `full_request`,
+  `request_snapshot`, `full_policy`, `policy_document`, `debug`,
+  `exception`, `stack_trace`, `traceback`, `subject_id`, `action`,
+  `resource`, `resource_type`, `http_status`, `response_status`,
+  `signature`, `signature_algorithm`, `hash_chain`, `previous_hash`, or
+  `merkle_root` field — any such field is rejected as unknown, enforced
+  by regression tests. Neither contract publishes a top-level
+  `redaction_classification` field, and neither claims YAML shape alone
+  provides immutability, tamper resistance, non-repudiation,
+  cryptographic authenticity, or chain of custody — durability and
+  storage remain explicitly a producer/deployment responsibility, per
+  ADR-0003 Section 17's "Open Questions Deferred." Does not implement
+  audit storage, retention, indexing, export, signing, tamper-evidence,
+  gateway enforcement, gateway middleware, or HTTP response behavior —
+  every one of these remains explicitly deferred. **The first-wave
+  `schemas/audit-event/audit-event.yaml` is completely unchanged** — no
+  rename, no widening, no version/field/example/validation change; its
+  `authorization_decision` event type and `allowed`/`denied`/`error`
+  outcome vocabulary remain exactly as published, never compared or
+  unified with either new contract's own vocabulary. No existing
+  contract (`decision-request`, `decision-response`, `audit-event`,
+  `action-string`, `resource-identifier`, `contract-metadata`,
+  `redaction-classification`, `reason-code`,
+  `identity-evidence-reference`, `adapter-evidence-reference`,
+  `operation-aware-decision-request`, `policy-condition`, `policy-rule`,
+  `policy-bundle`, `trace-rule-evidence`, `evaluation-trace`,
+  `operation-aware-decision-response`) changed shape, required fields,
+  optional fields, examples, or validation behavior, and none was made to
+  depend on these two new contracts. Not mandatory anywhere; no
+  implementation repository consumes PR F yet.
+- `basis_schemas.OPERATION_AWARE_AUDIT_CONTRACTS` metadata listing PR F's
+  two contracts in dependency-and-publication order. Additive: does not
+  change `PLANNED_CONTRACTS`, `PUBLISHED_CONTRACTS`,
+  `OPERATION_AWARE_SHARED_METADATA_CONTRACTS`,
+  `OPERATION_AWARE_EVIDENCE_REFERENCE_CONTRACTS`,
+  `OPERATION_AWARE_REQUEST_CONTRACTS`, `OPERATION_AWARE_POLICY_CONTRACTS`,
+  or `OPERATION_AWARE_RESPONSE_TRACE_CONTRACTS`.
+  `docs/operation-aware-schema-readiness.md` updated: PR F marked
+  published, with a section describing the contracts published, their
+  dependency order, the trace-vs-audit-vs-gateway-event distinction, the
+  kernel-result-vs-gateway-enforcement separation, decision/evaluation-
+  state reuse, fail-closed representation, policy provenance, evidence
+  references, redaction handling, boundedness, security, compatibility
+  posture, first-wave `audit-event` unchanged confirmation, what PR F
+  deliberately excludes, and how PR G is expected to use PR A through
+  PR F's own published examples. `PR G` remains marked not started.
+
 - **Response and trace contracts published** (second-wave, PR E of
   `basis-architecture`'s operation-aware schema readiness plan, ADR-0005).
   Publishes the machine-readable response and trace shapes a future
