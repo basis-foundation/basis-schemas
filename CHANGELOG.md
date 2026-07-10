@@ -12,6 +12,42 @@ contract versions and lifecycle states follow
 
 ### Added
 
+- **Operation-aware compatibility examples and test vectors published**
+  (second-wave, PR G of `basis-architecture`'s operation-aware schema
+  readiness plan, ADR-0005 — the final planned PR in this second wave).
+  Publishes canonical, cross-contract compatibility fixtures under
+  `examples/operation-aware/compatibility/` connecting PR A through PR F's
+  individually-published contracts into five complete operation-aware
+  authorization scenarios: `allow-basic` (a matching ALLOW rule, no
+  matching DENY rule), `deny-precedence` (a matching ALLOW and a matching
+  DENY rule in the same applicable bundle; DENY wins unconditionally),
+  `default-deny` (an applicable bundle with no matching ALLOW rule and no
+  DENY rule at all), `not-applicable` (no policy bundle's scope covers the
+  request; the gateway separately records fail-closed enforcement without
+  the kernel's `not_applicable` outcome ever being rewritten as `deny`),
+  and `invalid-policy-bundle` (an intentionally invalid bundle — duplicate
+  `rule_id` values — producing `evaluation_status: failed`,
+  `outcome: null`, `failure_reason: invalid_policy_bundle`, never a kernel
+  `deny`). Each scenario directory carries six artifacts: an
+  `operation-aware-decision-request`, a `policy-bundle` (or, for the fifth
+  scenario, an intentionally invalid `invalid-policy-bundle.yaml`), an
+  `expected-evaluation-trace`, an `expected-operation-aware-decision-response`,
+  an `expected-audit-evidence`, and an `expected-gateway-audit-event`. Adds
+  no new public contract, no new entry to `PUBLISHED_CONTRACTS` or any
+  `OPERATION_AWARE_*_CONTRACTS` tracking tuple, and modifies no existing
+  contract YAML — PR A through PR F are consumed exactly as published.
+  `tests/test_operation_aware_compatibility_vectors.py` validates every
+  fixture against its governing contract's own field policy and checks the
+  cross-artifact invariants (shared identifiers, policy provenance,
+  evaluation-state agreement) that only become visible once a scenario's
+  six artifacts are considered together, plus negative-mutation tests
+  proving the harness detects drift. See
+  [`examples/operation-aware/compatibility/README.md`](examples/operation-aware/compatibility/README.md)
+  and
+  [`docs/operation-aware-compatibility-vectors.md`](docs/operation-aware-compatibility-vectors.md).
+  **With PR G published, the operation-aware second wave is complete** —
+  see [`docs/operation-aware-schema-readiness.md`](docs/operation-aware-schema-readiness.md).
+
 - **Audit contracts published** (second-wave, PR F of
   `basis-architecture`'s operation-aware schema readiness plan, ADR-0005).
   Publishes the bounded, durable, audit-oriented evidence shape and the

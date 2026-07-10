@@ -26,10 +26,20 @@ A second wave has since added fourteen further contracts — `contract-metadata`
 `adapter-evidence-reference` (PR B), `operation-aware-decision-request` (PR C),
 `policy-condition`, `policy-rule`, `policy-bundle` (PR D),
 `trace-rule-evidence`, `evaluation-trace`, `operation-aware-decision-response`
-(PR E), and now `audit-evidence`, `gateway-audit-event` (PR F) — tracked
+(PR E), and `audit-evidence`, `gateway-audit-event` (PR F) — tracked
 separately in
 [`../docs/operation-aware-schema-readiness.md`](../docs/operation-aware-schema-readiness.md).
 They are additive; they do not extend or alter the six-contract first wave.
+
+PR G, the final PR of that second wave, adds no new contract here. It
+publishes canonical, cross-contract compatibility examples and test
+vectors under
+[`../examples/operation-aware/compatibility/`](../examples/operation-aware/compatibility/README.md)
+that connect the fourteen contracts above into complete operation-aware
+authorization scenarios, validated by
+`../tests/test_operation_aware_compatibility_vectors.py`. With PR G
+published, the operation-aware second wave is complete — see
+[`../docs/operation-aware-compatibility-vectors.md`](../docs/operation-aware-compatibility-vectors.md).
 
 ---
 

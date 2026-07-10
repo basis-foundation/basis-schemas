@@ -38,7 +38,9 @@ def test_required_docs_exist() -> None:
         "docs/operation-aware-decision-response.md",
         "docs/audit-evidence.md",
         "docs/gateway-audit-event.md",
+        "docs/operation-aware-compatibility-vectors.md",
         "schemas/README.md",
+        "examples/operation-aware/compatibility/README.md",
     ]
     missing = [path for path in required if not (REPO_ROOT / path).is_file()]
     assert not missing, f"missing required files: {missing}"

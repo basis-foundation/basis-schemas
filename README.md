@@ -45,8 +45,15 @@ shapes those components exchange.
 > gateway-emitted enforcement-boundary event shape a future `basis-core`
 > v0.2.0 and `basis-gateway` will produce and combine; the first-wave
 > **decision request**, **decision response**, and **audit event** above
-> remain published and unchanged. See
-> [`docs/operation-aware-schema-readiness.md`](docs/operation-aware-schema-readiness.md).
+> remain published and unchanged. That wave's final PR — **compatibility
+> examples and test vectors** (PR G) — has since published canonical,
+> cross-contract fixtures under
+> [`examples/operation-aware/compatibility/`](examples/operation-aware/compatibility/README.md)
+> connecting PR A through PR F into complete operation-aware authorization
+> scenarios; it adds no new contract. **The operation-aware second wave is
+> now complete.** See
+> [`docs/operation-aware-schema-readiness.md`](docs/operation-aware-schema-readiness.md)
+> and [`docs/operation-aware-compatibility-vectors.md`](docs/operation-aware-compatibility-vectors.md).
 
 ---
 

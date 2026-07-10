@@ -23,11 +23,11 @@ not close the contract set — the deferred contracts below, and any future shap
 
 A second wave, tracked separately in
 [`operation-aware-schema-readiness.md`](operation-aware-schema-readiness.md),
-has since begun: the shared metadata and vocabulary contracts
-(`contract-metadata`, `redaction-classification`, `reason-code`) from
-`basis-architecture`'s operation-aware schema readiness plan (ADR-0005) are now
-published. That plan and this one are deliberately kept separate — this
-document's six-contract count and completeness claim are unaffected by it.
+has since completed: all fourteen contracts of `basis-architecture`'s
+operation-aware schema readiness plan (ADR-0005), plus PR G's compatibility
+examples and test vectors, are now published. That plan and this one are
+deliberately kept separate — this document's six-contract count and
+completeness claim are unaffected by it.
 
 ---
 
