@@ -282,6 +282,90 @@ resource-identifier]`, and `depends_on: [contract-metadata, policy-rule]`
 respectively, and are additive and separate from the six-contract first
 wave and PR A/B/C's contracts; they do not extend or alter any of them.
 
+Its fifth PR — **response and trace contracts** — is also now published:
+
+- **Trace rule evidence** — _published_ (`experimental`). The bounded,
+  deterministic explanation record for one policy rule considered during
+  evaluation: `rule_id` / `effect` reused unchanged from `policy-rule`, a
+  closed `rule_result` (`matched` / `not_matched` / `skipped` / `error`),
+  optional bounded `condition_results`, and an optional `reason_code` /
+  static `explanation`. Never copies a rule's match criteria, conditions,
+  or the raw value compared. See
+  [`schemas/trace-rule-evidence/trace-rule-evidence.yaml`](schemas/trace-rule-evidence/trace-rule-evidence.yaml)
+  and [`docs/trace-rule-evidence.md`](docs/trace-rule-evidence.md).
+- **Evaluation trace** — _published_ (`experimental`). The deterministic,
+  bounded explanation of one kernel evaluation: `trace_id` / `request_id`
+  identity, a closed, nullable `outcome` matching `decision-response`'s
+  outcome vocabulary exactly, a closed `evaluation_status`
+  (`completed` / `failed`) and a closed `failure_reason`, and a
+  `rule_evidence` array of `trace-rule-evidence`-shaped values. **Required
+  invariant, enforced and tested: `outcome` is null if and only if
+  `evaluation_status` is `failed`.** See
+  [`schemas/evaluation-trace/evaluation-trace.yaml`](schemas/evaluation-trace/evaluation-trace.yaml)
+  and [`docs/evaluation-trace.md`](docs/evaluation-trace.md).
+- **Operation-aware decision response** — _published_ (`experimental`).
+  The additive vNext response contract: `request_id` echoed from PR C's
+  request, the identical `outcome` / `evaluation_status` / `failure_reason`
+  model as `evaluation-trace`, optional `bundle_id` / `bundle_version`, and
+  an optional `trace_id` reference and/or embedded `evaluation_trace`. **The
+  existing `schemas/decision-response/decision-response.yaml` is
+  unchanged**: this is a separate, additive vNext surface, not a v2. See
+  [`schemas/operation-aware-decision-response/operation-aware-decision-response.yaml`](schemas/operation-aware-decision-response/operation-aware-decision-response.yaml)
+  and
+  [`docs/operation-aware-decision-response.md`](docs/operation-aware-decision-response.md).
+
+These three are additive and separate from the six-contract first wave and
+PR A/B/C/D's contracts; they do not extend or alter any of them. Evaluation
+trace is explicitly not audit evidence — `AuditEvidence` and
+`GatewayAuditEvent` were deferred to PR F.
+
+Its sixth PR — **audit contracts** — is also now published:
+
+- **Audit evidence** — _published_ (`experimental`). The bounded, durable,
+  kernel-side evidence representation of one operation-aware authorization
+  evaluation: `evidence_id` / `request_id` identity, the identical
+  `evaluation_status` / `outcome` / `failure_reason` model reused unchanged
+  from `operation-aware-decision-response`, optional `bundle_id` /
+  `bundle_version`, a bounded `matched_rule_ids` array, optional
+  `identity_evidence_reference` / `adapter_evidence_reference`, and a
+  required `recorded_at` timestamp. This is the kernel-side evidence a
+  future `basis-core` v0.2.0 produces as an associated evaluation artifact
+  alongside the decision response and evaluation trace — not embedded in
+  `operation-aware-decision-response`, and not persisted by `basis-core`
+  anywhere durable. See
+  [`schemas/audit-evidence/audit-evidence.yaml`](schemas/audit-evidence/audit-evidence.yaml)
+  and [`docs/audit-evidence.md`](docs/audit-evidence.md).
+- **Gateway audit event** — _published_ (`experimental`). The bounded,
+  gateway-emitted record of what happened at the enforcement boundary: a
+  closed `event_type` (`gateway_authorization`), `request_id`, the
+  identical kernel `evaluation_status` / `outcome` / `failure_reason` model
+  reused unchanged, a required `audit_evidence_id` reference to the
+  associated `audit-evidence` record (referenced, never embedded), and a
+  closed `enforcement_action` (`allow` / `deny`) kept structurally
+  independent of the kernel `outcome` — fail-closed gateway behavior never
+  rewrites the kernel value. `basis-gateway` assembles this record by
+  combining kernel evidence with its own enforcement facts; it does not
+  produce `AuditEvidence`, and the kernel does not produce
+  `GatewayAuditEvent`. See
+  [`schemas/gateway-audit-event/gateway-audit-event.yaml`](schemas/gateway-audit-event/gateway-audit-event.yaml)
+  and [`docs/gateway-audit-event.md`](docs/gateway-audit-event.md).
+
+Both are additive and separate from the six-contract first wave and PR
+A/B/C/D/E's contracts. **The first-wave `schemas/audit-event/audit-event.yaml`
+is completely unchanged** — no rename, widening, or vocabulary unification
+with either new contract.
+
+Its seventh and final PR — **compatibility examples and test vectors** —
+adds no new contract. It publishes canonical, cross-contract compatibility
+fixtures under
+[`examples/operation-aware/compatibility/`](examples/operation-aware/compatibility/README.md)
+connecting PR A through PR F into five complete operation-aware
+authorization scenarios — `allow-basic`, `deny-precedence`, `default-deny`,
+`not-applicable`, and `invalid-policy-bundle` — validated by
+[`tests/test_operation_aware_compatibility_vectors.py`](tests/test_operation_aware_compatibility_vectors.py).
+**With PR G published, the operation-aware second wave is complete.** See
+[`docs/operation-aware-compatibility-vectors.md`](docs/operation-aware-compatibility-vectors.md).
+
 ---
 
 ## Repository layout
@@ -299,7 +383,15 @@ basis-schemas/
 │   ├── operation-aware-decision-request.md   PR C companion doc
 │   ├── policy-condition.md                   PR D companion doc
 │   ├── policy-rule.md                        PR D companion doc
-│   └── policy-bundle.md                      PR D companion doc
+│   ├── policy-bundle.md                      PR D companion doc
+│   ├── trace-rule-evidence.md                PR E companion doc
+│   ├── evaluation-trace.md                   PR E companion doc
+│   ├── operation-aware-decision-response.md  PR E companion doc
+│   ├── audit-evidence.md                     PR F companion doc
+│   ├── gateway-audit-event.md                PR F companion doc
+│   └── operation-aware-compatibility-vectors.md  PR G companion doc
+├── examples/
+│   └── operation-aware/compatibility/  PR G — five canonical compatibility scenarios
 ├── schemas/
 │   ├── README.md                  directory structure and schema lifecycle
 │   ├── vocabulary/                published — vocabulary.yaml (experimental)
@@ -316,7 +408,12 @@ basis-schemas/
 │   ├── operation-aware-decision-request/  published — operation-aware-decision-request.yaml (experimental)
 │   ├── policy-condition/          published — policy-condition.yaml (experimental)
 │   ├── policy-rule/               published — policy-rule.yaml (experimental)
-│   └── policy-bundle/             published — policy-bundle.yaml (experimental)
+│   ├── policy-bundle/             published — policy-bundle.yaml (experimental)
+│   ├── trace-rule-evidence/       published — trace-rule-evidence.yaml (experimental)
+│   ├── evaluation-trace/          published — evaluation-trace.yaml (experimental)
+│   ├── operation-aware-decision-response/  published — operation-aware-decision-response.yaml (experimental)
+│   ├── audit-evidence/            published — audit-evidence.yaml (experimental)
+│   └── gateway-audit-event/       published — gateway-audit-event.yaml (experimental)
 ├── src/
 │   └── basis_schemas/             minimal package: repository metadata
 ├── tests/                         lightweight metadata and docs checks
@@ -346,8 +443,39 @@ basis-schemas/
   (PR D).
 - [`docs/policy-bundle.md`](docs/policy-bundle.md) — the policy bundle
   contract (PR D).
+- [`docs/trace-rule-evidence.md`](docs/trace-rule-evidence.md) — the trace
+  rule evidence contract (PR E).
+- [`docs/evaluation-trace.md`](docs/evaluation-trace.md) — the evaluation
+  trace contract (PR E).
+- [`docs/operation-aware-decision-response.md`](docs/operation-aware-decision-response.md)
+  — the operation-aware decision response contract (PR E).
+- [`docs/audit-evidence.md`](docs/audit-evidence.md) — the kernel-side audit
+  evidence contract (PR F).
+- [`docs/gateway-audit-event.md`](docs/gateway-audit-event.md) — the
+  gateway-emitted enforcement-boundary event contract (PR F).
+- [`docs/operation-aware-compatibility-vectors.md`](docs/operation-aware-compatibility-vectors.md)
+  — the five canonical compatibility scenarios (PR G).
+- [`docs/release-notes.md`](docs/release-notes.md) — the external-facing
+  summary of what each release publishes, distilled from `CHANGELOG.md`.
 - [`schemas/README.md`](schemas/README.md) — schema directory structure and
   lifecycle.
+- [`examples/operation-aware/compatibility/README.md`](examples/operation-aware/compatibility/README.md)
+  — the compatibility-vector fixtures themselves, including this
+  repository's packaging boundary (see "How to consume contracts" below).
+
+## How to consume contracts
+
+Contracts here are published as YAML files under `schemas/`, not as a
+runtime API. `pip install basis-schemas` gives a small metadata package
+(`basis_schemas.PUBLISHED_CONTRACTS` and the `OPERATION_AWARE_*` tracking
+tuples) — it does **not** put `schemas/`, `docs/`, or `examples/` on disk,
+because `pyproject.toml` packages only `src/basis_schemas` in the built
+wheel. Consumers that need the contract files themselves — including the
+`examples/operation-aware/compatibility/` vectors — read them from a
+pinned source release, repository tag, submodule, or vendored copy of this
+repository rather than from the installed package. See
+[`examples/operation-aware/compatibility/README.md`](examples/operation-aware/compatibility/README.md#17-packaging-and-downstream-consumption),
+section 17, for the full packaging rationale.
 
 ## Development
 
