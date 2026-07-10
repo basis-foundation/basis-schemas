@@ -10,6 +10,8 @@ contract versions and lifecycle states follow
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-07-10
+
 ### Added
 
 - **Operation-aware compatibility examples and test vectors published**
