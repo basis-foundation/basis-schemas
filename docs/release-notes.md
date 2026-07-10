@@ -7,18 +7,16 @@ PR-by-PR history; this document distills that history into what a
 downstream consumer (`basis-core`, `basis-gateway`, `basis-adapters`,
 `basis-console`) actually needs to know before depending on a release.
 
-## Unreleased — operation-aware second wave complete
+## v0.2.0 — Operation-Aware Second Wave
 
 **A note on versioning.** The package version in `pyproject.toml` and
-`basis_schemas.__version__` is still `0.1.0` — the same version published
-at the first public release — even though this cycle adds fourteen new
-contracts. Every individual contract also carries its own contract
-version, `0.1.0`, independent of the package version. Whether the next
-release bumps the package version (for example to `0.2.0`) is a release
-decision for repository governance, not something this document decides;
-see "Version review" in the release-readiness report for this PR. This
-section is titled "Unreleased" rather than a specific version number for
-that reason.
+`basis_schemas.__version__` is now `0.2.0`, bumped from the `0.1.0` first
+public release to publish this cycle's fourteen new contracts. Every
+individual contract still carries its own contract version, `0.1.0`,
+independent of the package version — publishing a contract for the first
+time starts it at `0.1.0` regardless of the package version it ships
+under. This release is complete: all seven planned PRs (A through G) of
+the operation-aware schema readiness plan have been published.
 
 ### Highlights
 
