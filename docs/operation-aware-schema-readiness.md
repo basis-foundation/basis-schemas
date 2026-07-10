@@ -27,8 +27,13 @@ PR C — Operation-Aware DecisionRequest                   [published]
 PR D — Policy Bundle and Rule Contracts                  [published]
 PR E — DecisionResponse and EvaluationTrace               [published]
 PR F — Audit Evidence and GatewayAuditEvent               [published]
-PR G — Compatibility Examples and Test Vectors            [not started]
+PR G — Compatibility Examples and Test Vectors            [published]
 ```
+
+With PR G published, every PR in this order is published. This completes
+the operation-aware `basis-schemas` second wave (see
+[Section "PR G — Compatibility Examples and Test Vectors — published"](#pr-g--compatibility-examples-and-test-vectors--published)
+below).
 
 Each PR is scoped narrowly for independent review; later PRs depend on earlier
 ones. See ADR-0005 Section 6 for the full dependency map.
@@ -789,13 +794,192 @@ compatibility-vector primitive itself. Neither PR G nor any implementation
 repository consumes PR F yet; this section records expected direction
 only, per ADR-0005 Section 6.
 
-## PR G — Compatibility Examples and Test Vectors — not started
+## PR G — Compatibility Examples and Test Vectors — published
 
-PR G is not yet started. It becomes ready once the contracts it depends
-on, per ADR-0005 Section 6, are published — which is now the case (PR A
-through PR F are all published). This document will be updated when PR G
-lands, the same way [`migration-plan.md`](migration-plan.md) was updated
-across the first wave.
+PR G publishes canonical, cross-contract compatibility examples and test
+vectors that connect PR A through PR F's individually-published contracts
+into complete operation-aware authorization scenarios — the final planned
+PR in this second wave:
+
+- **[Compatibility vectors overview](operation-aware-compatibility-vectors.md)**
+  — the conceptual overview: purpose, authority hierarchy, relationship to
+  ADR-0005 and PR A through PR F, and what is and is not claimed.
+- **[`examples/operation-aware/compatibility/README.md`](../examples/operation-aware/compatibility/README.md)**
+  — the practical directory guide: layout, artifact naming, the scenario
+  matrix, and the full per-scenario semantic write-up.
+
+### Canonical scenarios published
+
+Five canonical scenarios, each directory holding six artifacts (an
+`operation-aware-decision-request`, a `policy-bundle` — or, for the fifth
+scenario, an intentionally invalid one — an `evaluation-trace`, an
+`operation-aware-decision-response`, an `audit-evidence`, and a
+`gateway-audit-event`):
+
+```text
+allow-basic            outcome: allow
+deny-precedence        outcome: deny (matching ALLOW and DENY rules; deny wins)
+default-deny           outcome: deny (applicable bundle, no matching ALLOW rule, no DENY rule)
+not-applicable         outcome: not_applicable (no bundle's scope covers the request)
+invalid-policy-bundle  evaluation_status: failed, outcome: null, failure_reason: invalid_policy_bundle
+```
+
+This is deliberately the smallest scenario set that distinguishes every
+evaluation-outcome category ADR-0002 names — a substantive `ALLOW`, a
+substantive `DENY` reached two different ways, a scope-coverage gap, and an
+evaluation failure — not an exhaustive enumeration of every named
+illustrative scenario in ADR-0005's own PR G description. See the deferred
+scenarios below.
+
+### Directory structure
+
+```text
+examples/operation-aware/compatibility/
+  README.md
+  allow-basic/          operation-aware-decision-request.yaml, policy-bundle.yaml,
+                        expected-evaluation-trace.yaml,
+                        expected-operation-aware-decision-response.yaml,
+                        expected-audit-evidence.yaml,
+                        expected-gateway-audit-event.yaml
+  deny-precedence/       (same six files)
+  default-deny/          (same six files)
+  not-applicable/        (same six files)
+  invalid-policy-bundle/ operation-aware-decision-request.yaml,
+                        invalid-policy-bundle.yaml (intentionally invalid),
+                        expected-evaluation-trace.yaml,
+                        expected-operation-aware-decision-response.yaml,
+                        expected-audit-evidence.yaml,
+                        expected-gateway-audit-event.yaml
+```
+
+This directory structure is the vector index. It is deliberately not a
+governed schema: it is not tracked in `basis_schemas.PUBLISHED_CONTRACTS` or
+any `OPERATION_AWARE_*_CONTRACTS` tuple, and no new public contract (a
+"compatibility-test-vector," "scenario-manifest," or similar) was added to
+`contract-metadata` or any other published contract. It is a deterministic,
+documented filesystem convention that both humans and
+`tests/test_operation_aware_compatibility_vectors.py` read directly.
+
+### Contract coverage
+
+Every scenario's six artifacts are validated against PR A through PR F's
+own published field policy, consumed exactly as published: no existing
+contract (`decision-request`, `decision-response`, `audit-event`,
+`contract-metadata`, `redaction-classification`, `reason-code`,
+`identity-evidence-reference`, `adapter-evidence-reference`,
+`operation-aware-decision-request`, `policy-condition`, `policy-rule`,
+`policy-bundle`, `trace-rule-evidence`, `evaluation-trace`,
+`operation-aware-decision-response`, `audit-evidence`,
+`gateway-audit-event`, `action-string`, `resource-identifier`) was
+modified, and no contract version, required/optional field, enum, pattern,
+constraint, or example changed.
+
+### Invalid-policy scenario: category choice
+
+`invalid-policy-bundle`'s fixture uses a duplicate `rule_id` across two
+rules in the same bundle — the same invalidity `policy-bundle.yaml`'s own
+published `examples.invalid` block already tests as a bundle-shape
+rejection, not a cross-field consistency check layered on top of an
+otherwise well-formed bundle. The corresponding kernel failure category is
+therefore `invalid_policy_bundle` ("the policy bundle does not conform to
+the required shape," per ADR-0002 Section 14), not
+`policy_validation_failure` ("shaped correctly but fails internal
+consistency validation"). `evaluation_status: failed` and `outcome: null`
+together — never `deny` — and the gateway event separately records
+fail-closed `enforcement_action: deny` without ever serializing a kernel
+deny.
+
+### Cross-object invariants
+
+`tests/test_operation_aware_compatibility_vectors.py` checks, for every
+scenario: `request_id`/`correlation_id` alignment across all six artifacts;
+`bundle_id`/`bundle_version` alignment where each artifact happens to carry
+them (PR F's own permissive, present-only agreement — no stronger
+both-or-none rule is invented here); `evaluation_status`/`outcome`/
+`failure_reason`/`reason_code` agreement between the response and trace;
+the audit evidence and gateway event preserving the kernel result
+unchanged; the gateway event's `audit_evidence_id` referencing the
+scenario's own audit-evidence record; and trace `rule_id` values existing
+in, and agreeing in `effect` with, the paired policy bundle's rules (never
+inferring rule priority from array order). Negative mutation tests (small,
+in-memory changes to a loaded fixture) confirm the harness actually
+detects drift in each of these invariants.
+
+### Downstream consumption
+
+These vectors are the future conformance target for `basis-core`
+(evaluating each scenario's request against its bundle should reach the
+recorded response/trace), `basis-gateway` (assembling each scenario's
+audit evidence and kernel result into the recorded gateway event,
+including fail-closed behavior on `not-applicable` and
+`invalid-policy-bundle`), and `basis-console` (sample data for operator-
+and training-mode explanation rendering). None of this is implemented or
+verified by this PR, and no cross-repository conformance is claimed to be
+green today.
+
+### Deterministic and offline
+
+Every identifier, digest, and timestamp is fixed and synthetic: no current-
+time generation, no random UUIDs, no filesystem-order dependence, no
+network access, and no dependency on `basis-core`, `basis-gateway`,
+Docker, AWS, an identity provider, protocol devices, or any other external
+service. `tests/test_operation_aware_compatibility_vectors.py` contains no
+branch-dependent Git usage (the same CI hazard PR E's own history already
+fixed once).
+
+### No runtime policy execution
+
+Neither the fixtures nor their tests parse a policy bundle's `match`/
+`conditions` against a request and compute an outcome. These are static,
+hand-authored expected artifacts checked for shape and cross-object
+consistency — not an evaluator, and not a second policy engine.
+
+### Compatibility authority
+
+```text
+basis-architecture:        normative authorization and audit semantics
+basis-schemas contracts:   normative machine-readable shapes
+PR G compatibility vectors: canonical examples of the current architecture and contracts
+future implementation repositories: consume the contracts and vectors
+```
+
+PR G does not define new authorization semantics and introduces no
+undocumented behavior beyond what ADR-0001 through ADR-0004 and PR A
+through PR F already establish.
+
+### Security / synthetic data
+
+Every fixture value is synthetic: no real user, employee, customer, site,
+device, or infrastructure identifier, and no real credential, token,
+claim, or protocol capture. `tests/test_operation_aware_compatibility_vectors.py`
+scans every fixture's parsed keys and raw text for a prohibited-field and
+prohibited-marker list as a regression guard.
+
+### Deferred scenarios
+
+Condition-evaluation-error and gateway-local failure are deliberately not
+included as canonical scenarios, despite each having a precedent in PR E's
+or PR F's own `examples:` blocks — neither has a deterministic,
+architecture-approved input-to-outcome mapping distinct from the five
+scenarios already published (see
+[`examples/operation-aware/compatibility/README.md`, "Deferred scenarios"](../examples/operation-aware/compatibility/README.md#14-deferred-scenarios)
+for the full reasoning on each). ADR-0005's own PR G description also names
+missing context, unknown resource type, and unsupported schema version as
+illustrative candidates; each is deferred for the same reason — it would
+either duplicate an evaluation state already covered or require inventing
+a deterministic input this repository's published contracts do not yet
+pin down precisely enough to fixture confidently.
+
+### Operation-aware second-wave completion
+
+With PR G published, every PR ADR-0005 named (PR A through PR G) is now
+published. This closes the operation-aware `basis-schemas` second wave. It
+does not mean any implementation repository (`basis-core`, `basis-gateway`,
+`basis-console`, `basis-adapters`, `basis-identity`) has implemented the
+operation-aware model these contracts and vectors describe, and it does
+not mean cross-repository conformance is already green — the next
+implementation phase is `basis-core` deterministic evaluation behavior,
+consistent with [`docs/migration-plan.md`](migration-plan.md).
 
 ## Relationship to the first wave
 
@@ -819,3 +1003,12 @@ PR F's audit contracts in `basis_schemas.OPERATION_AWARE_AUDIT_CONTRACTS`.
 This is one first wave plus one second wave organized into per-PR tracking
 groups — not seven separate waves — so none of these tracking groups'
 completeness claims ever conflate.
+
+PR G is the one exception to "each ordered PR gets its own tracking
+tuple": it publishes no new contract, so it has no
+`OPERATION_AWARE_COMPATIBILITY_CONTRACTS` (or similarly named) tuple, and
+`src/basis_schemas/__init__.py` is unchanged by PR G. Its published
+artifacts are tracked only by the deterministic directory structure under
+`examples/operation-aware/compatibility/`, documented in that directory's
+own `README.md` — a discovery mechanism, not a governed schema or a
+contract-tracking constant.

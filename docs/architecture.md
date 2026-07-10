@@ -151,8 +151,9 @@ contracts here — starting with the shared metadata and vocabulary contracts
 (PR A), the identity- and adapter-evidence-reference contracts (PR B), the
 operation-aware decision request (PR C), the policy bundle and rule
 contracts (PR D), the trace rule evidence, evaluation trace, and
-operation-aware decision response contracts (PR E), and now the audit
-evidence and gateway audit event contracts (PR F) — see
+operation-aware decision response contracts (PR E), the audit
+evidence and gateway audit event contracts (PR F), and now the
+compatibility examples and test vectors (PR G) — see
 [`operation-aware-schema-readiness.md`](operation-aware-schema-readiness.md)
 — the same boundaries apply unchanged: `basis-architecture` decides the
 shape, `basis-schemas` publishes it, and implementations consume it. No new
@@ -227,6 +228,24 @@ tamper-evidence, or gateway enforcement — see
 [`operation-aware-schema-readiness.md`](operation-aware-schema-readiness.md),
 "PR F," for the full boundary. No implementation repository consumes PR F
 yet.
+
+PR G, the final PR of the operation-aware second wave, publishes no new
+contract and defines no new semantics. It adds canonical, cross-contract
+compatibility examples and test vectors under
+[`../examples/operation-aware/compatibility/`](../examples/operation-aware/compatibility/README.md)
+that connect the fourteen PR A-F contracts into complete request →
+policy bundle → trace → response → audit-evidence → gateway-event
+scenarios, grounded in ADR-0002, ADR-0003, and ADR-0004 semantics and
+validated by `tests/test_operation_aware_compatibility_vectors.py`.
+`basis-architecture` remains the sole semantic authority; `basis-schemas`
+remains shape authority; PR G's vectors are illustrative fixtures for
+future implementation repositories (`basis-core`, `basis-gateway`) to
+validate against, not a new authority layer. See
+[`operation-aware-schema-readiness.md`](operation-aware-schema-readiness.md),
+"PR G," and
+[`operation-aware-compatibility-vectors.md`](operation-aware-compatibility-vectors.md)
+for the full detail. With PR G published, the operation-aware second wave
+is complete.
 
 ## Tooling rationale
 
