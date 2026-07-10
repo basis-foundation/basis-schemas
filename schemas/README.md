@@ -21,12 +21,13 @@ described in
 referenced below are defined in
 [`../docs/contract-governance.md`](../docs/contract-governance.md).
 
-A second wave has since added twelve further contracts — `contract-metadata`,
+A second wave has since added fourteen further contracts — `contract-metadata`,
 `redaction-classification`, `reason-code` (PR A), `identity-evidence-reference`,
 `adapter-evidence-reference` (PR B), `operation-aware-decision-request` (PR C),
-`policy-condition`, `policy-rule`, `policy-bundle` (PR D), and now
+`policy-condition`, `policy-rule`, `policy-bundle` (PR D),
 `trace-rule-evidence`, `evaluation-trace`, `operation-aware-decision-response`
-(PR E) — tracked separately in
+(PR E), and now `audit-evidence`, `gateway-audit-event` (PR F) — tracked
+separately in
 [`../docs/operation-aware-schema-readiness.md`](../docs/operation-aware-schema-readiness.md).
 They are additive; they do not extend or alter the six-contract first wave.
 
@@ -55,19 +56,22 @@ schemas/
 ├── policy-bundle/                policy identity/version/scope/rules shape — PUBLISHED (policy-bundle.yaml)
 ├── trace-rule-evidence/         bounded per-rule trace explanation shape — PUBLISHED (trace-rule-evidence.yaml)
 ├── evaluation-trace/            deterministic, bounded evaluation explanation shape — PUBLISHED (evaluation-trace.yaml)
-└── operation-aware-decision-response/  additive vNext response shape — PUBLISHED (operation-aware-decision-response.yaml)
+├── operation-aware-decision-response/  additive vNext response shape — PUBLISHED (operation-aware-decision-response.yaml)
+├── audit-evidence/              bounded, durable kernel-side evidence shape — PUBLISHED (audit-evidence.yaml)
+└── gateway-audit-event/         gateway-emitted enforcement-boundary event shape — PUBLISHED (gateway-audit-event.yaml)
 ```
 
 The first six directories are the first-wave contracts described above and in
-[`../docs/migration-plan.md`](../docs/migration-plan.md). The last twelve —
+[`../docs/migration-plan.md`](../docs/migration-plan.md). The last fourteen —
 `contract-metadata`, `redaction-classification`, `reason-code`,
 `identity-evidence-reference`, `adapter-evidence-reference`,
 `operation-aware-decision-request`, `policy-condition`, `policy-rule`,
-`policy-bundle`, `trace-rule-evidence`, `evaluation-trace`, and
-`operation-aware-decision-response` — are a second wave: shared foundation,
-evidence-reference, request, policy bundle/rule, and response/trace
+`policy-bundle`, `trace-rule-evidence`, `evaluation-trace`,
+`operation-aware-decision-response`, `audit-evidence`, and
+`gateway-audit-event` — are a second wave: shared foundation,
+evidence-reference, request, policy bundle/rule, response/trace, and audit
 contracts from `basis-architecture`'s operation-aware schema readiness plan
-(ADR-0005), PRs A, B, C, D, and E respectively. They are not part of the
+(ADR-0005), PRs A, B, C, D, E, and F respectively. They are not part of the
 first wave's six-contract count and do not extend it.
 `operation-aware-decision-request` and `operation-aware-decision-response`
 are additive alongside `decision-request` and `decision-response`, not
@@ -75,8 +79,13 @@ replacements for them. `policy-condition`, `policy-rule`, and
 `policy-bundle` publish a structured policy DATA model, not a policy
 language — no policy evaluation is implemented by any contract in this
 repository. `trace-rule-evidence` and `evaluation-trace` publish evaluation
-*explanation* shapes, not audit records — audit evidence and gateway audit
-events remain deferred to PR F. See
+*explanation* shapes, not audit records. `audit-evidence` is the bounded,
+durable kernel-side evidence shape `basis-core` produces as part of its
+response (not persisted by `basis-core` itself); `gateway-audit-event` is
+the separate, gateway-emitted enforcement-boundary event shape
+`basis-gateway` assembles by combining that evidence with its own
+enforcement facts — the two are never collapsed into one contract, and the
+existing first-wave `audit-event` is unchanged. See
 [`../docs/operation-aware-schema-readiness.md`](../docs/operation-aware-schema-readiness.md).
 
 Every directory above now holds a real schema definition; no `PLACEHOLDER.md`

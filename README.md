@@ -39,9 +39,13 @@ shapes those components exchange.
 > published, along with that wave's **trace rule evidence**, **evaluation
 > trace**, and **operation-aware decision response** contracts (PR E), the
 > machine-readable response and trace shapes a future `basis-core` v0.2.0
-> will produce after deterministic operation-aware policy evaluation; the
-> first-wave **decision request** and **decision response** above remain
-> published and unchanged. See
+> will produce after deterministic operation-aware policy evaluation, and
+> now that wave's **audit evidence** and **gateway audit event** contracts
+> (PR F) — the bounded, durable kernel-side evidence shape and the
+> gateway-emitted enforcement-boundary event shape a future `basis-core`
+> v0.2.0 and `basis-gateway` will produce and combine; the first-wave
+> **decision request**, **decision response**, and **audit event** above
+> remain published and unchanged. See
 > [`docs/operation-aware-schema-readiness.md`](docs/operation-aware-schema-readiness.md).
 
 ---

@@ -26,7 +26,7 @@ PR B — Evidence Reference Contracts                      [published]
 PR C — Operation-Aware DecisionRequest                   [published]
 PR D — Policy Bundle and Rule Contracts                  [published]
 PR E — DecisionResponse and EvaluationTrace               [published]
-PR F — Audit Evidence and GatewayAuditEvent               [not started]
+PR F — Audit Evidence and GatewayAuditEvent               [published]
 PR G — Compatibility Examples and Test Vectors            [not started]
 ```
 
@@ -582,25 +582,220 @@ input, not authorization precedence"; policy loading, evaluation, or
 enforcement behavior; identity token, JWT, OIDC, or session schemas; or
 protocol payload schemas.
 
-### How PR F will consume response/trace identifiers without redefining them
+### How PR F consumes response/trace identifiers without redefining them
 
-PR F (audit evidence and `GatewayAuditEvent`) is expected to reference
-`evaluation-trace.trace_id`, `operation-aware-decision-response.request_id`,
-and PR D's `bundle_id` / `bundle_version`, the same way PR E's contracts
-already reference PR C's `request_id` and PR D's `bundle_id` /
-`bundle_version` / `rule_id`. Neither PR F nor PR G exists yet; this
-section records expected dependency direction only, per ADR-0005
-Section 6. PR E does not imply that `basis-core` consumes these response/
-trace contracts yet — no implementation repository does.
+PR F (audit evidence and `GatewayAuditEvent`, now published — see below)
+references `evaluation-trace.trace_id`,
+`operation-aware-decision-response.request_id`, and PR D's `bundle_id` /
+`bundle_version`, the same way PR E's contracts already reference PR C's
+`request_id` and PR D's `bundle_id` / `bundle_version` / `rule_id`. PR E
+does not imply that `basis-core` consumes these response/trace contracts
+yet — no implementation repository does.
 
-## PRs F and G — not started
+## PR F — Audit Evidence and GatewayAuditEvent — published
 
-The remaining PRs (audit evidence and gateway audit event; compatibility
-examples and test vectors) are not yet started. Each becomes ready for its
-own PR once the contracts it depends on, per ADR-0005 Section 6, are
-published. This document will be updated as each PR lands, the same way
-[`migration-plan.md`](migration-plan.md) was updated across the first
-wave.
+PR F publishes the bounded, durable audit-evidence shape and the
+gateway-emitted enforcement-boundary event shape named by ADR-0003
+(`docs/architecture/operation-aware-trace-audit-evidence.md`), against the
+response and trace contracts published by PR E:
+
+- **[Audit evidence](audit-evidence.md)** —
+  `schemas/audit-evidence/audit-evidence.yaml`. The bounded, durable,
+  audit-oriented evidence representation of one evaluation: `evidence_id`
+  and `request_id` identity, optional `correlation_id` / `trace_id`
+  association, the same `evaluation_status` / `outcome` / `failure_reason`
+  model as PR E (kept in parity), optional `bundle_id` / `bundle_version`
+  from PR D, a bounded `matched_rule_ids` array (stable rule identifiers,
+  never a full per-rule trace), optional `identity_evidence_reference` /
+  `adapter_evidence_reference` reused unchanged from PR B, an optional
+  `reason_code` / `explanation`, and a required `recorded_at` timestamp
+  distinct from any request-supplied `evaluation_time`. This is the
+  kernel-side audit evidence ADR-0003 Section 14 names `basis-core` as
+  producing (as part of its response, not persisted durably by
+  `basis-core`) — not something `basis-gateway` assembles. Declares
+  `depends_on: [contract-metadata, operation-aware-decision-response,
+  evaluation-trace, policy-bundle, identity-evidence-reference,
+  adapter-evidence-reference, reason-code]`.
+- **[Gateway audit event](gateway-audit-event.md)** —
+  `schemas/gateway-audit-event/gateway-audit-event.yaml`. The bounded,
+  gateway-emitted record of what happened at the enforcement boundary:
+  `event_id` and a closed `event_type` (`gateway_authorization`, the
+  smallest safe representation for this PR), a required emission
+  `timestamp`, `request_id` / optional `correlation_id`, the same kernel
+  `evaluation_status` / `outcome` / `failure_reason` model reused
+  unchanged, a required `audit_evidence_id` reference to the associated
+  `audit-evidence` record (referenced, never embedded), an optional
+  `gateway_id`, a closed `enforcement_action` (`allow` / `deny`) kept
+  structurally independent of the kernel `outcome`, and an optional,
+  small, closed `gateway_failure_reason` distinct from the kernel
+  `failure_reason`. This is the record ADR-0003 Section 14 names
+  `basis-gateway` as assembling by "combining kernel evidence with
+  enforcement facts." Declares `depends_on: [contract-metadata,
+  operation-aware-decision-response, evaluation-trace, policy-bundle,
+  audit-evidence, reason-code]`.
+
+Both are published at contract version `0.1.0`, lifecycle `experimental`,
+in dependency order (`audit-evidence` before `gateway-audit-event`),
+tracked in `basis_schemas.OPERATION_AWARE_AUDIT_CONTRACTS`.
+
+### Trace vs. audit vs. gateway event
+
+Per ADR-0003 Section 2, the three artifacts are distinct and never
+collapsed: `evaluation-trace` (PR E) is the kernel-produced *explanation*
+of one evaluation; `audit-evidence` (PR F) is the durable, bounded
+*evidence* representation derived from the response, the trace, and PR B's
+evidence references — broader than trace, but not a second copy of it;
+`gateway-audit-event` (PR F) is the *enforcement-boundary* record
+`basis-gateway` emits after combining `audit-evidence` with its own
+enforcement facts. `audit-evidence` references `evaluation-trace.trace_id`
+rather than embedding rule-level or condition-level evidence;
+`gateway-audit-event` references `audit-evidence.evidence_id` rather than
+embedding the evidence record.
+
+### Kernel result vs. gateway enforcement
+
+`gateway-audit-event.enforcement_action` is structurally independent of the
+kernel `outcome` it echoes: this PR does not require `enforcement_action`
+to mechanically equal `outcome`. In particular, `enforcement_action: deny`
+is valid and expected alongside kernel `outcome: not_applicable` and
+alongside kernel `evaluation_status: failed` (fail-closed gateway behavior
+on a kernel result that was not itself a policy deny) — neither
+combination rewrites the kernel value: `not_applicable` is never
+serialized as `deny`, and a failed evaluation never carries a non-null
+outcome. `basis-core` decides; `basis-gateway` enforces and records
+enforcement facts (ADR-0003 Section 9).
+
+### Decision/evaluation-state reuse
+
+`evaluation_status`, `outcome`, and `failure_reason` are reused unchanged
+on both PR F contracts from PR E's `operation-aware-decision-response` and
+`evaluation-trace`, kept in parity by this repository's test suite, with
+the identical required invariant already established by PR E: a failed
+evaluation never carries a non-null outcome, and `failure_reason` is
+non-null if and only if `evaluation_status` is `failed`.
+
+### Fail-closed representation
+
+Per ADR-0003 Section 15 and Section 17, this repository does not model a
+deployment-wide fail-open/fail-closed *policy* — that remains explicitly
+deferred to later work. `gateway-audit-event.enforcement_action` and the
+optional `gateway_failure_reason` (a small, closed, gateway-LOCAL failure
+category — `gateway_timeout`, `upstream_unavailable`,
+`audit_assembly_failure`, `internal_gateway_error` — distinct in both name
+and meaning from the reused kernel `failure_reason`) represent only the
+bounded fact of what happened for one event, never a standing deployment
+policy. When `gateway_failure_reason` is non-null, `enforcement_action` is
+required to be `deny`.
+
+### Policy provenance
+
+Both PR F contracts optionally echo PR D's `policy-bundle.bundle_id` /
+`bundle_version` unchanged, the same reuse pattern PR E already
+established, kept in parity by this repository's test suite. Neither
+contract embeds a full policy bundle, rule set, or scope.
+
+### Evidence references
+
+`audit-evidence` reuses PR B's `identity-evidence-reference` and
+`adapter-evidence-reference` unchanged for its own optional evidence
+fields. `gateway-audit-event` carries neither field directly — those
+remain exclusively on the `audit-evidence` record it references by
+`audit_evidence_id`.
+
+### Redaction handling
+
+Neither PR F contract publishes a top-level `redaction_classification`
+field: every value each carries directly is already a safe identifier, a
+closed vocabulary member, a reason code, or a reference to a record that
+already carries its own redaction handling (PR B's evidence-reference
+contracts). Per ADR-0003 Section 10's unconditional rule, no audit or
+gateway-event artifact may contain a secret — enforced by regression
+tests in both new contract's test suites.
+
+### Boundedness
+
+Neither PR F contract carries a full request snapshot, a full policy
+bundle, raw identity evidence, raw adapter evidence, raw protocol
+payloads, a per-rule trace object, condition-level evidence, or any
+subject/action/resource field of its own — both reference the evaluated
+request only by `request_id` (and, on `audit-evidence`, `trace_id`), per
+ADR-0003 Section 6's "avoid duplicating the full raw request when a stable
+reference is sufficient." `gateway-audit-event` additionally carries no
+route, endpoint, HTTP status, or response-status field.
+
+### Security
+
+Neither PR F contract defines an `access_token`, `id_token`,
+`refresh_token`, `jwt`, `bearer_token`, `authorization_header`, `cookie`,
+`session_secret`, `client_secret`, `password`, `private_key`, `api_key`,
+`credential`, `raw_claims`, `raw_payload`, `raw_protocol_payload`,
+`full_request`, `request_snapshot`, `full_policy`, `policy_document`,
+`debug`, `exception`, `stack_trace`, `traceback`, `signature`,
+`signature_algorithm`, `hash_chain`, `previous_hash`, or `merkle_root`
+field — enforced by regression tests. Neither contract claims YAML shape
+alone provides immutability, tamper resistance, non-repudiation,
+cryptographic authenticity, or chain of custody; durability is documented
+as a producer/storage responsibility ADR-0003 Section 17 leaves open.
+
+### Compatibility posture
+
+Purely additive. PR F does not modify `decision-request`,
+`decision-response`, `audit-event`, `action-string`, `resource-identifier`,
+`contract-metadata`, `redaction-classification`, `reason-code`,
+`identity-evidence-reference`, `adapter-evidence-reference`,
+`operation-aware-decision-request`, `policy-condition`, `policy-rule`,
+`policy-bundle`, `trace-rule-evidence`, `evaluation-trace`, or
+`operation-aware-decision-response` — their shapes, required fields,
+optional fields, examples, and validation behavior are all unchanged, and
+none is made to depend on PR F's new contracts. Neither of PR F's two
+contracts is mandatory anywhere; no implementation repository consumes
+them yet.
+
+### First-wave `audit-event` unchanged
+
+`schemas/audit-event/audit-event.yaml` — the first-wave, sixth contract —
+is completely unchanged by PR F: no rename, no widening, no version,
+field, example, or validation change. `audit-evidence` and
+`gateway-audit-event` are separate, additive operation-aware contracts,
+published alongside it, using their own outcome/event-type vocabularies
+that are never compared or unified with the first-wave contract's own
+`allowed`/`denied`/`error` outcome or `authorization_decision` event type.
+
+### What PR F deliberately excludes
+
+Consistent with ADR-0005's own scope for PR F and ADR-0003 Section 17's
+"Open Questions Deferred," this PR does not introduce or implement: audit
+storage APIs, database schemas, retention engines, log shipping,
+SIEM/S3/Kafka/syslog/CloudWatch/OpenTelemetry integrations, cryptographic
+signing, signature verification, hash chains, Merkle trees, tamper-proof
+or non-repudiation claims, audit approval/review/export workflows, audit
+search APIs, audit UI, gateway runtime code, gateway middleware, HTTP
+response behavior, policy evaluation, identity verification, protocol
+parsing, a final reason-code vocabulary, a deployment-wide fail-open/
+fail-closed policy, or a compatibility-test-vector framework (deferred to
+PR G). A final trace schema, a final audit event schema, an audit
+storage/retention model, a tamper-evident audit design, compliance
+mapping, privacy/data-minimization policy, safety-system audit
+requirements, adapter evidence schema changes, and identity evidence
+schema changes all remain explicitly deferred, per ADR-0003 Section 17.
+
+### How PR G will use canonical examples
+
+PR G (compatibility examples and test vectors) is expected to build
+canonical cross-repository fixtures from the examples PR A through PR F
+already publish — including `audit-evidence` and `gateway-audit-event`'s
+own `examples: {valid, invalid}` blocks — rather than PR F introducing a
+compatibility-vector primitive itself. Neither PR G nor any implementation
+repository consumes PR F yet; this section records expected direction
+only, per ADR-0005 Section 6.
+
+## PR G — Compatibility Examples and Test Vectors — not started
+
+PR G is not yet started. It becomes ready once the contracts it depends
+on, per ADR-0005 Section 6, are published — which is now the case (PR A
+through PR F are all published). This document will be updated when PR G
+lands, the same way [`migration-plan.md`](migration-plan.md) was updated
+across the first wave.
 
 ## Relationship to the first wave
 
@@ -618,8 +813,9 @@ B's evidence-reference contracts in
 `basis_schemas.OPERATION_AWARE_EVIDENCE_REFERENCE_CONTRACTS`, PR C's
 request contract in `basis_schemas.OPERATION_AWARE_REQUEST_CONTRACTS`, PR
 D's policy bundle/rule contracts in
-`basis_schemas.OPERATION_AWARE_POLICY_CONTRACTS`, and PR E's response/trace
-contracts in `basis_schemas.OPERATION_AWARE_RESPONSE_TRACE_CONTRACTS`.
+`basis_schemas.OPERATION_AWARE_POLICY_CONTRACTS`, PR E's response/trace
+contracts in `basis_schemas.OPERATION_AWARE_RESPONSE_TRACE_CONTRACTS`, and
+PR F's audit contracts in `basis_schemas.OPERATION_AWARE_AUDIT_CONTRACTS`.
 This is one first wave plus one second wave organized into per-PR tracking
-groups — not six separate waves — so none of these tracking groups'
+groups — not seven separate waves — so none of these tracking groups'
 completeness claims ever conflate.

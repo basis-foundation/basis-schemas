@@ -215,3 +215,41 @@ def test_operation_aware_response_trace_contracts_disjoint_from_pr_a_through_pr_
     assert not (pr_b & pr_e), f"contract names appear in both PR B and PR E: {pr_b & pr_e}"
     assert not (pr_c & pr_e), f"contract names appear in both PR C and PR E: {pr_c & pr_e}"
     assert not (pr_d & pr_e), f"contract names appear in both PR D and PR E: {pr_d & pr_e}"
+
+
+def test_operation_aware_audit_contracts_match_pr_f() -> None:
+    # The two audit contracts published by PR F of the operation-aware
+    # schema readiness plan (ADR-0005), in dependency-and-publication order.
+    assert basis_schemas.OPERATION_AWARE_AUDIT_CONTRACTS == (
+        "audit-evidence",
+        "gateway-audit-event",
+    )
+
+
+def test_operation_aware_audit_contracts_do_not_extend_first_wave() -> None:
+    # PR F is additive and separate: it must not appear in, or change the
+    # length of, the first-wave six-contract tuples. The existing first-wave
+    # audit-event is unaffected.
+    assert len(basis_schemas.PLANNED_CONTRACTS) == 6
+    assert len(basis_schemas.PUBLISHED_CONTRACTS) == 6
+    for contract in basis_schemas.OPERATION_AWARE_AUDIT_CONTRACTS:
+        assert contract not in basis_schemas.PLANNED_CONTRACTS
+        assert contract not in basis_schemas.PUBLISHED_CONTRACTS
+
+
+def test_operation_aware_audit_contracts_disjoint_from_pr_a_through_pr_e() -> None:
+    # PR F must never be conflated with PR A's shared metadata contracts,
+    # PR B's evidence-reference contracts, PR C's request contract, PR D's
+    # policy contracts, or PR E's response/trace contracts: no name should
+    # appear in more than one tracking tuple.
+    pr_a = set(basis_schemas.OPERATION_AWARE_SHARED_METADATA_CONTRACTS)
+    pr_b = set(basis_schemas.OPERATION_AWARE_EVIDENCE_REFERENCE_CONTRACTS)
+    pr_c = set(basis_schemas.OPERATION_AWARE_REQUEST_CONTRACTS)
+    pr_d = set(basis_schemas.OPERATION_AWARE_POLICY_CONTRACTS)
+    pr_e = set(basis_schemas.OPERATION_AWARE_RESPONSE_TRACE_CONTRACTS)
+    pr_f = set(basis_schemas.OPERATION_AWARE_AUDIT_CONTRACTS)
+    assert not (pr_a & pr_f), f"contract names appear in both PR A and PR F: {pr_a & pr_f}"
+    assert not (pr_b & pr_f), f"contract names appear in both PR B and PR F: {pr_b & pr_f}"
+    assert not (pr_c & pr_f), f"contract names appear in both PR C and PR F: {pr_c & pr_f}"
+    assert not (pr_d & pr_f), f"contract names appear in both PR D and PR F: {pr_d & pr_f}"
+    assert not (pr_e & pr_f), f"contract names appear in both PR E and PR F: {pr_e & pr_f}"

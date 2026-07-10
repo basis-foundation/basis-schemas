@@ -48,6 +48,15 @@ the first-wave six-contract count, of PR A's shared metadata contracts, of
 PR B's evidence-reference contracts, of PR C's request contract, or of
 PR D's policy contracts.
 
+PR F of that same second wave has since published the audit contracts —
+``audit-evidence`` and ``gateway-audit-event``, in dependency order —
+tracked separately again, in ``OPERATION_AWARE_AUDIT_CONTRACTS`` below,
+for the same reason: they are additive publications, not an extension of
+the first-wave six-contract count (the existing first-wave ``audit-event``
+is unchanged), of PR A's shared metadata contracts, of PR B's evidence-
+reference contracts, of PR C's request contract, of PR D's policy
+contracts, or of PR E's response/trace contracts.
+
 This package does **not** define, validate, or implement any contract. Contracts
 are decided in ``basis-architecture`` and published, once migrated, under the
 ``schemas/`` directory.
@@ -68,6 +77,7 @@ __all__ = [
     "OPERATION_AWARE_REQUEST_CONTRACTS",
     "OPERATION_AWARE_POLICY_CONTRACTS",
     "OPERATION_AWARE_RESPONSE_TRACE_CONTRACTS",
+    "OPERATION_AWARE_AUDIT_CONTRACTS",
     "is_phase1_foundation",
 ]
 
@@ -189,6 +199,28 @@ OPERATION_AWARE_RESPONSE_TRACE_CONTRACTS: Final[tuple[str, ...]] = (
     "trace-rule-evidence",
     "evaluation-trace",
     "operation-aware-decision-response",
+)
+
+#: The audit contracts published by PR F of the operation-aware schema
+#: readiness plan (``basis-architecture`` ADR-0005, "PR F — Audit Evidence
+#: and GatewayAuditEvent"), in dependency-and-publication order: the
+#: bounded, durable kernel-side audit-evidence shape produced by
+#: ``basis-core`` as part of its response; and the gateway-emitted
+#: enforcement-boundary event shape that references that evidence by
+#: ``audit_evidence_id`` rather than embedding it. Like
+#: ``OPERATION_AWARE_SHARED_METADATA_CONTRACTS``,
+#: ``OPERATION_AWARE_EVIDENCE_REFERENCE_CONTRACTS``,
+#: ``OPERATION_AWARE_REQUEST_CONTRACTS``,
+#: ``OPERATION_AWARE_POLICY_CONTRACTS``, and
+#: ``OPERATION_AWARE_RESPONSE_TRACE_CONTRACTS`` above, this is a separate,
+#: additive tracking tuple: it does not extend ``PLANNED_CONTRACTS`` /
+#: ``PUBLISHED_CONTRACTS``, which continue to track only the original
+#: six-contract first wave. The existing first-wave ``audit-event`` is
+#: unchanged and is not part of this tuple. See
+#: ``docs/operation-aware-schema-readiness.md``.
+OPERATION_AWARE_AUDIT_CONTRACTS: Final[tuple[str, ...]] = (
+    "audit-evidence",
+    "gateway-audit-event",
 )
 
 
