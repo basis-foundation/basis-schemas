@@ -11,49 +11,22 @@ authorization in operational technology (OT) environments, governed by the
 Basis Foundation. This repository is the single source of truth for the data
 shapes those components exchange.
 
-> **Status: all six planned contracts published.** The action **vocabulary** —
-> the five canonical verbs — is published under
-> [`schemas/vocabulary/vocabulary.yaml`](schemas/vocabulary/vocabulary.yaml),
-> the **action string** format `{verb}:{domain}[:{object}]` under
-> [`schemas/action-string/action-string.yaml`](schemas/action-string/action-string.yaml),
-> the **resource identifier** format `{resource_type}:{local_resource_id}`
-> under
-> [`schemas/resource-identifier/resource-identifier.yaml`](schemas/resource-identifier/resource-identifier.yaml),
-> the **decision request** — the kernel input shape — under
-> [`schemas/decision-request/decision-request.yaml`](schemas/decision-request/decision-request.yaml),
-> the **decision response** — the kernel output shape — under
-> [`schemas/decision-response/decision-response.yaml`](schemas/decision-response/decision-response.yaml),
-> and the **audit event** — the canonical audit record shape — under
-> [`schemas/audit-event/audit-event.yaml`](schemas/audit-event/audit-event.yaml).
-> This completes the first planned migration wave; it is not a claim that the
-> contract set is closed forever — future contracts may still be added through
-> `basis-architecture` governance. See [`docs/migration-plan.md`](docs/migration-plan.md).
-> A second wave has since begun: **contract metadata**, **redaction
-> classification**, and **reason code** — the shared foundation contracts from
-> `basis-architecture`'s operation-aware schema readiness plan (ADR-0005) — are
-> now published, along with that wave's **identity evidence reference** and
-> **adapter evidence reference** contracts (PR B), the **operation-aware
-> decision request** (PR C) — an additive vNext request contract — and the
-> **policy condition**, **policy rule**, and **policy bundle** contracts
-> (PR D) — a structured policy *data model*, not a policy language — are now
-> published, along with that wave's **trace rule evidence**, **evaluation
-> trace**, and **operation-aware decision response** contracts (PR E), the
-> machine-readable response and trace shapes a future `basis-core` v0.2.0
-> will produce after deterministic operation-aware policy evaluation, and
-> now that wave's **audit evidence** and **gateway audit event** contracts
-> (PR F) — the bounded, durable kernel-side evidence shape and the
-> gateway-emitted enforcement-boundary event shape a future `basis-core`
-> v0.2.0 and `basis-gateway` will produce and combine; the first-wave
-> **decision request**, **decision response**, and **audit event** above
-> remain published and unchanged. That wave's final PR — **compatibility
-> examples and test vectors** (PR G) — has since published canonical,
-> cross-contract fixtures under
-> [`examples/operation-aware/compatibility/`](examples/operation-aware/compatibility/README.md)
-> connecting PR A through PR F into complete operation-aware authorization
-> scenarios; it adds no new contract. **The operation-aware second wave is
-> now complete.** See
-> [`docs/operation-aware-schema-readiness.md`](docs/operation-aware-schema-readiness.md)
-> and [`docs/operation-aware-compatibility-vectors.md`](docs/operation-aware-compatibility-vectors.md).
+> **Status: v0.2.0 released.** `basis-schemas` publishes **20 contracts**:
+> the six first-wave contracts released at v0.1.0 (vocabulary, action
+> string, resource identifier, decision request, decision response, audit
+> event), plus fourteen operation-aware contracts published across
+> `basis-architecture`'s operation-aware schema readiness plan (ADR-0005).
+> That second wave — shared metadata, evidence references, the
+> operation-aware decision request, a structured policy data model, the
+> response and trace contracts, and the kernel/gateway audit contracts —
+> is now complete, along with **five canonical compatibility scenarios**
+> connecting these contracts under
+> [`examples/operation-aware/compatibility/`](examples/operation-aware/compatibility/README.md).
+> This is a snapshot of what has shipped, not a claim that the contract set
+> is closed — future contracts may still be published through
+> `basis-architecture` governance. See
+> [`docs/release-notes.md`](docs/release-notes.md) and
+> [`CHANGELOG.md`](CHANGELOG.md) for release detail.
 
 ---
 
@@ -117,11 +90,45 @@ semantics of its own; if a shape has not been decided in `basis-architecture`,
 it does not belong here yet, regardless of whether an implementation
 repository is ready to consume it.
 
-## First contracts
+## Current published contract inventory
 
-The following contracts migrate in dependency-and-stability order (lowest-risk
-first). All six are now **published** — this completes the first planned wave.
-Future contracts may still be added later through `basis-architecture` governance.
+As of v0.2.0, 20 contracts are published under `schemas/`, all at
+`experimental` lifecycle. See [`docs/contract-governance.md`](docs/contract-governance.md)
+for what `experimental` means and how contracts advance.
+
+| Group | Contracts | Count |
+| --- | --- | --- |
+| First wave (v0.1.0) | vocabulary, action-string, resource-identifier, decision-request, decision-response, audit-event | 6 |
+| Second wave — shared metadata | contract-metadata, redaction-classification, reason-code | 3 |
+| Second wave — evidence references | identity-evidence-reference, adapter-evidence-reference | 2 |
+| Second wave — operation-aware request | operation-aware-decision-request | 1 |
+| Second wave — policy data model | policy-condition, policy-rule, policy-bundle | 3 |
+| Second wave — response and trace | trace-rule-evidence, evaluation-trace, operation-aware-decision-response | 3 |
+| Second wave — audit | audit-evidence, gateway-audit-event | 2 |
+| **Total** | | **20** |
+
+The first-wave contracts remain published, documented, tested, and
+byte-for-byte unchanged since the v0.1.0 release; the second wave is
+additive and does not modify them. Five canonical compatibility scenarios
+(`allow-basic`, `deny-precedence`, `default-deny`, `not-applicable`,
+`invalid-policy-bundle`) connecting request, policy, trace, response, and
+audit contracts are published under
+[`examples/operation-aware/compatibility/`](examples/operation-aware/compatibility/README.md).
+
+Per-contract detail — dependencies, fields, and rationale — is documented in
+[`schemas/README.md`](schemas/README.md) and the per-contract docs linked from
+the [Documentation](#documentation) section below. The rest of this section
+walks through the order contracts were migrated and published; skip ahead to
+[Repository layout](#repository-layout) if you just need the current state.
+
+## Migration history
+
+### First contracts
+
+The following contracts migrated in dependency-and-stability order
+(lowest-risk first). All six were published at v0.1.0, completing the first
+planned wave. Future contracts may still be added later through
+`basis-architecture` governance.
 
 1. **Vocabulary** — _published_ (`experimental`). The five canonical action
    verbs (`read`, `write`, `execute`, `browse`, `subscribe`), published as the
@@ -166,7 +173,7 @@ More complex contracts (the normalized request shape, the reserved
 `basis_gateway.*` namespace rule, and compatibility snapshots) are deferred to a
 later phase. See [`docs/migration-plan.md`](docs/migration-plan.md).
 
-## Second wave: operation-aware shared metadata
+### Second wave: operation-aware shared metadata
 
 `basis-architecture`'s operation-aware schema readiness plan (ADR-0005) defines
 a further, ordered sequence of contracts beyond the six above, needed for the
