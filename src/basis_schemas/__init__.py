@@ -57,9 +57,21 @@ is unchanged), of PR A's shared metadata contracts, of PR B's evidence-
 reference contracts, of PR C's request contract, of PR D's policy
 contracts, or of PR E's response/trace contracts.
 
+PR G, the seventh and final PR of that same second wave, has since
+published canonical, cross-contract compatibility examples and test
+vectors under ``examples/operation-aware/compatibility/``, connecting PR A
+through PR F into five complete operation-aware authorization scenarios.
+It publishes no new schema contract and adds no new tracking tuple here —
+every contract it exercises was already published by an earlier PR. With
+PR G published, the operation-aware second wave described above is
+complete. See ``docs/operation-aware-compatibility-vectors.md``.
+
 This package does **not** define, validate, or implement any contract. Contracts
 are decided in ``basis-architecture`` and published, once migrated, under the
-``schemas/`` directory.
+``schemas/`` directory. This package also does **not** carry the contract
+files themselves onto a consumer's disk: the built wheel packages only this
+``src/basis_schemas`` metadata module, not ``schemas/``, ``docs/``, or
+``examples/``. See "How to consume contracts" in ``README.md``.
 """
 
 from __future__ import annotations

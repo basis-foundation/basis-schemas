@@ -7,11 +7,111 @@ migrated yet.
 
 from __future__ import annotations
 
+import re
+from pathlib import Path
+
 import basis_schemas
+
+REPO_ROOT = Path(__file__).resolve().parent.parent
+
+#: The full, flat, release-readiness-review inventory: the six first-wave
+#: contracts followed by the fourteen additive operation-aware second-wave
+#: contracts, in publication order (PR A through PR F; PR G published no
+#: new contract). This is deliberately a single, non-decomposed list — the
+#: per-wave tuples above are exercised individually elsewhere, but nothing
+#: else in this suite asserts "exactly these twenty names, no more, no
+#: fewer, all in one place," which is what a release-readiness review needs
+#: to see at a glance.
+ALL_PUBLISHED_CONTRACTS: tuple[str, ...] = (
+    # First wave (six contracts)
+    "vocabulary",
+    "action-string",
+    "resource-identifier",
+    "decision-request",
+    "decision-response",
+    "audit-event",
+    # Second wave, PR A — shared metadata and vocabulary
+    "contract-metadata",
+    "redaction-classification",
+    "reason-code",
+    # Second wave, PR B — evidence references
+    "identity-evidence-reference",
+    "adapter-evidence-reference",
+    # Second wave, PR C — operation-aware decision request
+    "operation-aware-decision-request",
+    # Second wave, PR D — policy bundle and rule contracts
+    "policy-condition",
+    "policy-rule",
+    "policy-bundle",
+    # Second wave, PR E — response and trace contracts
+    "trace-rule-evidence",
+    "evaluation-trace",
+    "operation-aware-decision-response",
+    # Second wave, PR F — audit contracts
+    "audit-evidence",
+    "gateway-audit-event",
+)
 
 
 def test_project_name() -> None:
     assert basis_schemas.PROJECT_NAME == "basis-schemas"
+
+
+def test_all_published_contracts_list_has_twenty_unique_entries() -> None:
+    # Sanity check on the literal list above, independent of the filesystem
+    # or the package's own tuples: exactly twenty names, no duplicates.
+    assert len(ALL_PUBLISHED_CONTRACTS) == 20
+    assert len(set(ALL_PUBLISHED_CONTRACTS)) == 20
+
+
+def test_all_published_contracts_list_matches_package_tuples() -> None:
+    # The flat inventory above must equal the union of every published-contract
+    # tracking tuple the package exports, with no name missing and no
+    # unexpected extra name.
+    from_package = (
+        set(basis_schemas.PUBLISHED_CONTRACTS)
+        | set(basis_schemas.OPERATION_AWARE_SHARED_METADATA_CONTRACTS)
+        | set(basis_schemas.OPERATION_AWARE_EVIDENCE_REFERENCE_CONTRACTS)
+        | set(basis_schemas.OPERATION_AWARE_REQUEST_CONTRACTS)
+        | set(basis_schemas.OPERATION_AWARE_POLICY_CONTRACTS)
+        | set(basis_schemas.OPERATION_AWARE_RESPONSE_TRACE_CONTRACTS)
+        | set(basis_schemas.OPERATION_AWARE_AUDIT_CONTRACTS)
+    )
+    assert set(ALL_PUBLISHED_CONTRACTS) == from_package
+
+
+def test_all_published_contracts_have_a_schema_directory_and_file() -> None:
+    # Every one of the twenty published contracts has a real schema
+    # definition on disk, discoverable at the conventional path.
+    for contract in ALL_PUBLISHED_CONTRACTS:
+        directory = REPO_ROOT / "schemas" / contract
+        assert directory.is_dir(), f"missing schema directory: {contract}"
+        schema_file = directory / f"{contract}.yaml"
+        assert schema_file.is_file(), f"missing schema file: {schema_file}"
+
+
+def test_schemas_directory_has_no_unexpected_contract_directories() -> None:
+    # The inverse of the check above: no schema directory exists that isn't
+    # one of the twenty tracked contracts (guards against a contract being
+    # published without being added to a tracking tuple).
+    schemas_dir = REPO_ROOT / "schemas"
+    actual = {p.name for p in schemas_dir.iterdir() if p.is_dir()}
+    assert actual == set(ALL_PUBLISHED_CONTRACTS), (
+        f"unexpected schema directories: {actual - set(ALL_PUBLISHED_CONTRACTS)}; "
+        f"missing schema directories: {set(ALL_PUBLISHED_CONTRACTS) - actual}"
+    )
+
+
+def test_package_version_matches_pyproject_version() -> None:
+    # basis_schemas.__version__ and the [project].version declared in
+    # pyproject.toml must never drift apart. Parsed with a narrow regex
+    # rather than a TOML parser to avoid adding a new dependency for one
+    # field; this repository targets Python 3.10, which has no stdlib
+    # `tomllib` (added in 3.11).
+    pyproject_text = (REPO_ROOT / "pyproject.toml").read_text(encoding="utf-8")
+    match = re.search(r'(?m)^version\s*=\s*"([^"]+)"', pyproject_text)
+    assert match, "could not find [project].version in pyproject.toml"
+    assert basis_schemas.__version__ == match.group(1)
 
 
 def test_version_is_a_string() -> None:

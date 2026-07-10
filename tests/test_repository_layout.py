@@ -39,6 +39,7 @@ def test_required_docs_exist() -> None:
         "docs/audit-evidence.md",
         "docs/gateway-audit-event.md",
         "docs/operation-aware-compatibility-vectors.md",
+        "docs/release-notes.md",
         "schemas/README.md",
         "examples/operation-aware/compatibility/README.md",
     ]
