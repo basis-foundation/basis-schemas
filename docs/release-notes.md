@@ -7,6 +7,68 @@ PR-by-PR history; this document distills that history into what a
 downstream consumer (`basis-core`, `basis-gateway`, `basis-adapters`,
 `basis-console`) actually needs to know before depending on a release.
 
+## v0.2.1 — Compatibility Vector Classification Fix
+
+**This is a patch release.** It corrects the failure-category
+classification of one operation-aware compatibility scenario; it
+publishes no new contract, changes no contract shape, field, version, or
+enum, and does not alter compatibility semantics generally. The `20`
+published contracts and `5` canonical compatibility scenarios from
+`v0.2.0` are unchanged in number and unchanged in shape.
+
+**A note on versioning.** The package version in `pyproject.toml` and
+`basis_schemas.__version__` is now `0.2.1`, bumped from `0.2.0` to
+distribute this correction. No individual contract version changed —
+every contract still carries the same contract version it carried under
+`v0.2.0`.
+
+The `invalid-policy-bundle` compatibility scenario keeps its name and its
+underlying defect (a policy bundle with duplicate `rule_id` values
+across its `rules` array). What changes is its **expected failure
+category**:
+
+- before (`v0.2.0`): `failure_reason: invalid_policy_bundle`
+- after (`v0.2.1`): `failure_reason: policy_validation_failure`
+
+Duplicate `rule_id` values are a **semantic bundle-validation defect**,
+not a structural one: the bundle and every rule within it are
+individually well-formed — every field, at every level, conforms to its
+own schema — but the bundle as a whole violates a cross-rule uniqueness
+invariant that no single rule object's schema can express. Per
+ADR-0002 Section 14, that is "shaped correctly but fails internal
+consistency validation" (`policy_validation_failure`), not "does not
+conform to the required shape" (`invalid_policy_bundle`).
+`invalid_policy_bundle` remains the correct classification for a bundle
+that is structurally malformed; this fix narrows nothing about that
+category, it only corrects which category this one scenario's defect
+belongs to.
+
+All four result artifacts for the `invalid-policy-bundle` scenario now
+agree on the corrected category:
+
+- the expected evaluation trace
+- the expected operation-aware decision response
+- the expected kernel audit evidence
+- the expected gateway audit event
+
+Within those artifacts, the kernel `outcome` remains `null` — evaluation
+failed before an ALLOW/DENY outcome could be produced — and gateway
+enforcement remains `deny`, because the gateway fails closed on any
+evaluation failure regardless of failure category.
+
+No contract schema, field, enum, or contract version changed as part of
+this release. `policy_validation_failure` and `invalid_policy_bundle`
+were both already published, valid members of the `failure_reason` enum
+before this fix; this release only corrects which of the two values one
+scenario's fixtures expect.
+
+**Consumer direction.** Consumers using the canonical operation-aware
+compatibility vectors should update from the `v0.2.0` source snapshot to
+`v0.2.1`. As with `v0.2.0`, consume this repository's contracts and
+fixtures from a pinned source release, repository tag, or vendored
+snapshot — not by scraping `main`, which may move ahead of any tagged
+release.
+
 ## v0.2.0 — Operation-Aware Second Wave
 
 **A note on versioning.** The package version in `pyproject.toml` and
