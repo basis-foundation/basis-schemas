@@ -9,7 +9,6 @@
 request_id: req-compat-invalid-policy-001
 evaluation_status: failed
 outcome: null
-failure_reason: invalid_policy_bundle
+failure_reason: policy_validation_failure
 trace_id: trace-compat-invalid-policy-001
-reason_code: policy_bundle_invalid
 explanation: The policy bundle failed validation because it declared duplicate rule IDs.

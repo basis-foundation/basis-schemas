@@ -953,21 +953,60 @@ def test_not_applicable_semantics() -> None:
 
 
 def test_invalid_policy_bundle_semantics() -> None:
+    # Named scenario directory: "invalid-policy-bundle" (the supplied policy
+    # bundle is invalid). Kernel failure category: `policy_validation_failure`
+    # -- the bundle is shaped correctly (every rule and every top-level field
+    # individually valid) but violates the cross-rule, bundle-level rule_id
+    # uniqueness invariant, which is internal-consistency validation, not a
+    # structural shape defect (ADR-0002 Section 14). See
+    # test_mutation_invalid_policy_bundle_becomes_valid_once_duplicate_is_fixed
+    # below, which proves the duplicate rule_id is the fixture's only defect.
     s = _load_scenario("invalid-policy-bundle")
     assert s["response"]["evaluation_status"] == "failed"
     assert s["response"]["outcome"] is None
-    assert s["response"]["failure_reason"] == "invalid_policy_bundle"
+    assert s["response"]["failure_reason"] == "policy_validation_failure"
     assert s["trace"]["evaluation_status"] == "failed"
     assert s["trace"]["outcome"] is None
+    assert s["trace"]["failure_reason"] == "policy_validation_failure"
+    assert s["trace"]["bundle_applicability"] is None
     assert s["trace"]["rule_evidence"] == []
     assert s["audit"]["outcome"] is None
-    assert s["audit"]["failure_reason"] == "invalid_policy_bundle"
+    assert s["audit"]["failure_reason"] == "policy_validation_failure"
+    assert s["audit"].get("matched_rule_ids") in (None, [])
     # Kernel failed/null state preserved verbatim; gateway fails closed
     # separately, never as a kernel deny.
     assert s["gateway"]["evaluation_status"] == "failed"
     assert s["gateway"]["outcome"] is None
-    assert s["gateway"]["failure_reason"] == "invalid_policy_bundle"
+    assert s["gateway"]["failure_reason"] == "policy_validation_failure"
     assert s["gateway"]["enforcement_action"] == "deny"
+
+
+def test_invalid_policy_bundle_cross_artifact_agreement() -> None:
+    """The four result artifacts (trace, response, audit, gateway) must all
+    agree on evaluation_status/outcome/failure_reason/request_id -- this is
+    the specific cross-artifact agreement this correction must not break by
+    updating one artifact's failure_reason without the other three.
+    """
+    s = _load_scenario("invalid-policy-bundle")
+    for field in ("request_id",):
+        values = {s[name][field] for name in ("trace", "response", "audit", "gateway")}
+        assert len(values) == 1, f"{field} disagrees across result artifacts: {values}"
+    for field in ("evaluation_status", "outcome", "failure_reason"):
+        values = {s[name].get(field) for name in ("trace", "response", "audit", "gateway")}
+        assert len(values) == 1, f"{field} disagrees across result artifacts: {values}"
+    assert s["response"]["failure_reason"] == "policy_validation_failure"
+
+
+def test_invalid_policy_bundle_no_reason_code_invented() -> None:
+    """No approved reason-code equivalent for policy_validation_failure is
+    published in this repository's governed vocabulary (docs/reason-code.md,
+    ADR-0003 Section 12); this scenario must not invent one.
+    """
+    s = _load_scenario("invalid-policy-bundle")
+    assert s["trace"].get("reason_code") is None
+    assert s["response"].get("reason_code") is None
+    assert s["audit"].get("reason_code") is None
+    assert s["gateway"].get("reason_code") is None
 
 
 # ---------------------------------------------------------------------------
