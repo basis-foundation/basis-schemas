@@ -821,7 +821,7 @@ allow-basic            outcome: allow
 deny-precedence        outcome: deny (matching ALLOW and DENY rules; deny wins)
 default-deny           outcome: deny (applicable bundle, no matching ALLOW rule, no DENY rule)
 not-applicable         outcome: not_applicable (no bundle's scope covers the request)
-invalid-policy-bundle  evaluation_status: failed, outcome: null, failure_reason: invalid_policy_bundle
+invalid-policy-bundle  evaluation_status: failed, outcome: null, failure_reason: policy_validation_failure
 ```
 
 This is deliberately the smallest scenario set that distinguishes every
@@ -878,16 +878,24 @@ constraint, or example changed.
 
 `invalid-policy-bundle`'s fixture uses a duplicate `rule_id` across two
 rules in the same bundle — the same invalidity `policy-bundle.yaml`'s own
-published `examples.invalid` block already tests as a bundle-shape
-rejection, not a cross-field consistency check layered on top of an
-otherwise well-formed bundle. The corresponding kernel failure category is
-therefore `invalid_policy_bundle` ("the policy bundle does not conform to
-the required shape," per ADR-0002 Section 14), not
+published `examples.invalid` block already tests. That contract's own field
+policy documents this specific check as BUNDLE-level validation: "a
+cross-rule uniqueness concern a single rule object's own schema cannot
+express or enforce" (`schemas/policy-bundle/policy-bundle.yaml`). Every rule
+in the fixture, and the bundle's own top-level fields, are individually
+well formed; the defect only exists across the `rules` array as a whole.
+The corresponding kernel failure category is therefore
 `policy_validation_failure` ("shaped correctly but fails internal
-consistency validation"). `evaluation_status: failed` and `outcome: null`
-together — never `deny` — and the gateway event separately records
-fail-closed `enforcement_action: deny` without ever serializing a kernel
-deny.
+consistency validation," per ADR-0002 Section 14), not `invalid_policy_bundle`
+("does not conform to the required shape") — the earlier revision of this
+scenario classified it the other way around, which this correction fixes.
+`invalid_policy_bundle` remains a valid, non-deprecated failure category; it
+applies to a bundle malformed at the shape level (a missing required field,
+a malformed rule/condition shape, an invalid enum value, an invalid
+identifier pattern), which is a different defect than this scenario's
+fixture demonstrates. `evaluation_status: failed` and `outcome: null` together — never
+`deny` — and the gateway event separately records fail-closed
+`enforcement_action: deny` without ever serializing a kernel deny.
 
 ### Cross-object invariants
 

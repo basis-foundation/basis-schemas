@@ -5,10 +5,15 @@
 # (schemas/policy-bundle/policy-bundle.yaml): rule_id values across a
 # bundle's rules array must be unique (see that contract's own "duplicate
 # rule IDs within one bundle" invalid example, which this fixture mirrors).
-# Duplicate rule_id is a bundle-shape validation failure the policy-bundle
-# contract itself rejects — not a cross-field consistency problem layered on
-# top of an otherwise-valid bundle — so the corresponding kernel failure
-# category is `invalid_policy_bundle`, not `policy_validation_failure`. See
+# Duplicate rule_id is a cross-rule, BUNDLE-level consistency defect — a
+# concern no single rule object's own schema can express or enforce (see
+# policy-bundle.yaml's own "rules" field description and constraints) — not
+# a missing field, malformed type, or malformed shape on any one object.
+# Every individual rule and the bundle's own top-level fields are otherwise
+# shaped correctly. Per ADR-0002 Section 14, the corresponding kernel
+# failure category is therefore `policy_validation_failure` ("shaped
+# correctly but fails internal consistency validation"), not
+# `invalid_policy_bundle` ("does not conform to the required shape"). See
 # examples/operation-aware/compatibility/README.md, "Invalid-policy
 # scenario," for the full reasoning.
 #

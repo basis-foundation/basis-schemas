@@ -117,9 +117,14 @@ Each scenario directory carries one instance of six contracts:
 `allow-basic`'s request and audit evidence additionally carry an
 `identity_evidence_reference` and `adapter_evidence_reference` (PR B), and
 every `reason_code` value used across every scenario is a structurally
-valid `reason-code` (PR A) token, reusing `no_applicable_bundle`,
-`policy_bundle_invalid`, and other codes already used in PR A through PR F's
-own published `examples:` blocks rather than inventing new ones.
+valid `reason-code` (PR A) token, reusing `no_applicable_bundle` and other
+codes already used in PR A through PR F's own published `examples:` blocks
+rather than inventing new ones. The `invalid-policy-bundle` scenario carries
+no `reason_code` at all: no approved reason-code equivalent for a
+`policy_validation_failure`-category result is published in this
+repository's governed reason-code vocabulary (see
+[`docs/reason-code.md`](../../../docs/reason-code.md)), and this PR does
+not invent one.
 
 ## 7. Allow scenario (`allow-basic`)
 
@@ -157,10 +162,19 @@ matched. The trace records both matched rules; array order in
 - **Invalid-policy scenario (`invalid-policy-bundle`):** `invalid-policy-bundle.yaml`
   intentionally fails `policy-bundle`'s own published field policy (duplicate
   `rule_id` values — the same invalid case that contract's own `examples:`
-  block already tests). This is a bundle-shape failure, not a
-  shaped-but-inconsistent bundle, so the response/trace/audit/gateway-event
-  artifacts all carry `failure_reason: invalid_policy_bundle`, never
-  `policy_validation_failure`. `evaluation_status: failed` and
+  block already tests). The bundle is structurally well formed — every rule
+  and every top-level field is individually valid — but it violates a
+  cross-rule, bundle-level invariant (`rule_id` uniqueness across the
+  `rules` array) that no single rule object's own schema can express or
+  enforce. Per ADR-0002 Section 14, that makes this a
+  `policy_validation_failure` ("shaped correctly but fails internal
+  consistency validation"), not an `invalid_policy_bundle` ("does not
+  conform to the required shape"), so the response/trace/audit/gateway-event
+  artifacts all carry `failure_reason: policy_validation_failure`.
+  `invalid_policy_bundle` remains a valid failure category — it applies to a
+  bundle that is malformed at the shape level (a missing required field, a
+  malformed rule, an invalid enum value, and similar), which is not what this
+  scenario's fixture demonstrates. `evaluation_status: failed` and
   `outcome: null` together, never `deny` — an evaluation failure is not a
   policy decision (ADR-0002 Section 14). The gateway event separately
   records `enforcement_action: deny` (fail-closed on a kernel failure).

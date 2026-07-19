@@ -92,11 +92,17 @@ by ADR-0002 (evaluation semantics) and ADR-0003 (trace/audit evidence):
   all: `outcome: not_applicable`, distinct from `deny` (ADR-0002 Section 5),
   with the gateway separately recording fail-closed `enforcement_action:
   deny` without rewriting the kernel's `not_applicable` result.
-- **`invalid-policy-bundle`** — a policy bundle that fails PR D's own
-  published shape validation (duplicate `rule_id`): `evaluation_status:
-  failed`, `outcome: null`, `failure_reason: invalid_policy_bundle`
-  (ADR-0002 Section 14), with the gateway again recording fail-closed
-  `enforcement_action: deny` without ever serializing a kernel `deny`.
+- **`invalid-policy-bundle`** — a policy bundle that is shaped correctly but
+  violates a cross-rule, bundle-level invariant PR D's own `policy-bundle`
+  contract defines (duplicate `rule_id` values across the bundle's `rules`
+  array — a uniqueness concern no single rule object's own schema can
+  express or enforce): `evaluation_status: failed`, `outcome: null`,
+  `failure_reason: policy_validation_failure` (ADR-0002 Section 14, "shaped
+  correctly but fails internal consistency validation"), with the gateway
+  again recording fail-closed `enforcement_action: deny` without ever
+  serializing a kernel `deny`. `invalid_policy_bundle` ("does not conform to
+  the required shape") remains a valid, non-deprecated failure category for
+  a structurally malformed bundle; it is simply not this scenario's defect.
 
 This is deliberately the smallest scenario set that distinguishes every
 evaluation-outcome category ADR-0002 names: a substantive `ALLOW`, a

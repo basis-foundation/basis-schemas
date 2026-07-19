@@ -10,6 +10,50 @@ contract versions and lifecycle states follow
 
 ## [Unreleased]
 
+### Fixed
+
+- **Corrected the `invalid-policy-bundle` operation-aware compatibility
+  vector's failure-category classification.** The scenario's duplicate
+  `rule_id` defect is now classified as `policy_validation_failure` rather
+  than `invalid_policy_bundle`, correcting a misclassification introduced
+  when the scenario was first published in `v0.2.0`. The policy bundle in
+  this scenario is shaped correctly — every rule and every top-level field
+  is individually valid — but violates a cross-rule, bundle-level
+  invariant (`rule_id` uniqueness across the `rules` array) that no single
+  rule object's own schema can express or enforce. Per ADR-0002 Section 14,
+  that is "shaped correctly but fails internal consistency validation"
+  (`policy_validation_failure`), not "does not conform to the required
+  shape" (`invalid_policy_bundle`). Updated
+  `expected-evaluation-trace.yaml`, `expected-operation-aware-decision-response.yaml`,
+  `expected-audit-evidence.yaml`, and `expected-gateway-audit-event.yaml`
+  under `examples/operation-aware/compatibility/invalid-policy-bundle/` to
+  agree on `failure_reason: policy_validation_failure`; removed the
+  `reason_code: policy_bundle_invalid` value from the three artifacts that
+  carried it, since no approved reason-code equivalent for
+  `policy_validation_failure` is published in this repository's governed
+  reason-code vocabulary and none is invented here. Updated
+  `examples/operation-aware/compatibility/README.md`,
+  `docs/operation-aware-compatibility-vectors.md`, and
+  `docs/operation-aware-schema-readiness.md` to describe the corrected
+  reasoning, and updated `tests/test_operation_aware_compatibility_vectors.py`
+  accordingly. The `invalid-policy-bundle` scenario directory keeps its
+  existing name — it describes the broad scenario (the supplied bundle is
+  invalid), which is a separate concern from the precise
+  `failure_reason` category. **No schema contract, field, enum, or
+  runtime implementation changed**: `policy_validation_failure` and
+  `invalid_policy_bundle` were both already published, six-value-enum
+  members of `evaluation-trace`, `operation-aware-decision-response`,
+  `audit-evidence`, and `gateway-audit-event`'s `failure_reason` field
+  before this correction; `invalid_policy_bundle` remains a valid,
+  non-deprecated failure category for a bundle that is malformed at the
+  shape level, which is a different defect than this scenario's fixture
+  demonstrates. This is a compatibility-vector correctness fix, not a new
+  feature or a contract change. A follow-up `v0.2.1` patch release is
+  expected to distribute this correction; this entry does not itself bump
+  the package version, consistent with this repository's existing
+  convention of preparing a release in its own dedicated PR (see
+  `b5d6709`, "chore: prepare v0.2.0 release").
+
 ## [0.2.0] - 2026-07-10
 
 ### Added
