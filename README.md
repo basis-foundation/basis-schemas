@@ -11,7 +11,7 @@ authorization in operational technology (OT) environments, governed by the
 Basis Foundation. This repository is the single source of truth for the data
 shapes those components exchange.
 
-> **Status: v0.2.0 released.** `basis-schemas` publishes **20 contracts**:
+> **Status: v0.2.1 released.** `basis-schemas` publishes **20 contracts**:
 > the six first-wave contracts released at v0.1.0 (vocabulary, action
 > string, resource identifier, decision request, decision response, audit
 > event), plus fourteen operation-aware contracts published across
@@ -22,9 +22,11 @@ shapes those components exchange.
 > is now complete, along with **five canonical compatibility scenarios**
 > connecting these contracts under
 > [`examples/operation-aware/compatibility/`](examples/operation-aware/compatibility/README.md).
-> This is a snapshot of what has shipped, not a claim that the contract set
-> is closed — future contracts may still be published through
-> `basis-architecture` governance. See
+> `v0.2.1` is a patch release that corrects the expected failure-category
+> classification of one compatibility scenario; it changes none of the
+> twenty contracts. This is a snapshot of what has shipped, not a claim
+> that the contract set is closed — future contracts may still be
+> published through `basis-architecture` governance. See
 > [`docs/release-notes.md`](docs/release-notes.md) and
 > [`CHANGELOG.md`](CHANGELOG.md) for release detail.
 

@@ -119,6 +119,14 @@ def test_version_is_a_string() -> None:
     assert basis_schemas.__version__
 
 
+def test_package_version_is_current_release() -> None:
+    # Pins the package version to the current release so a stale bump (or a
+    # forgotten one) fails loudly here rather than only being caught by the
+    # weaker pyproject-agreement check above, which would pass even if both
+    # values were accidentally left at the prior release.
+    assert basis_schemas.__version__ == "0.2.1"
+
+
 def test_planned_contracts_match_migration_order() -> None:
     # The six first-wave contracts, in the order recorded in
     # docs/migration-plan.md and the basis-architecture charter.

@@ -10,6 +10,8 @@ contract versions and lifecycle states follow
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-07-18
+
 ### Fixed
 
 - **Corrected the `invalid-policy-bundle` operation-aware compatibility
@@ -20,18 +22,25 @@ contract versions and lifecycle states follow
   this scenario is shaped correctly — every rule and every top-level field
   is individually valid — but violates a cross-rule, bundle-level
   invariant (`rule_id` uniqueness across the `rules` array) that no single
-  rule object's own schema can express or enforce. Per ADR-0002 Section 14,
-  that is "shaped correctly but fails internal consistency validation"
-  (`policy_validation_failure`), not "does not conform to the required
-  shape" (`invalid_policy_bundle`). Updated
+  rule object's own schema can express or enforce: duplicate `rule_id`
+  values are a **semantic, cross-object validation failure**, not a
+  structural one. Per ADR-0002 Section 14, that is "shaped correctly but
+  fails internal consistency validation" (`policy_validation_failure`),
+  not "does not conform to the required shape" (`invalid_policy_bundle`).
+  `invalid_policy_bundle` remains the correct, valid classification for a
+  bundle that fails at the structural shape level — this correction does
+  not narrow or deprecate that category, only fixes which category this
+  one scenario's defect belongs to. Updated
   `expected-evaluation-trace.yaml`, `expected-operation-aware-decision-response.yaml`,
   `expected-audit-evidence.yaml`, and `expected-gateway-audit-event.yaml`
-  under `examples/operation-aware/compatibility/invalid-policy-bundle/` to
-  agree on `failure_reason: policy_validation_failure`; removed the
+  (**four expected artifacts**) under
+  `examples/operation-aware/compatibility/invalid-policy-bundle/` to agree
+  on `failure_reason: policy_validation_failure`; removed the
   `reason_code: policy_bundle_invalid` value from the three artifacts that
   carried it, since no approved reason-code equivalent for
   `policy_validation_failure` is published in this repository's governed
-  reason-code vocabulary and none is invented here. Updated
+  reason-code vocabulary — that structural reason code was **removed, not
+  replaced with an invented one**. Updated
   `examples/operation-aware/compatibility/README.md`,
   `docs/operation-aware-compatibility-vectors.md`, and
   `docs/operation-aware-schema-readiness.md` to describe the corrected
@@ -39,20 +48,15 @@ contract versions and lifecycle states follow
   accordingly. The `invalid-policy-bundle` scenario directory keeps its
   existing name — it describes the broad scenario (the supplied bundle is
   invalid), which is a separate concern from the precise
-  `failure_reason` category. **No schema contract, field, enum, or
-  runtime implementation changed**: `policy_validation_failure` and
-  `invalid_policy_bundle` were both already published, six-value-enum
-  members of `evaluation-trace`, `operation-aware-decision-response`,
-  `audit-evidence`, and `gateway-audit-event`'s `failure_reason` field
-  before this correction; `invalid_policy_bundle` remains a valid,
-  non-deprecated failure category for a bundle that is malformed at the
-  shape level, which is a different defect than this scenario's fixture
-  demonstrates. This is a compatibility-vector correctness fix, not a new
-  feature or a contract change. A follow-up `v0.2.1` patch release is
-  expected to distribute this correction; this entry does not itself bump
-  the package version, consistent with this repository's existing
-  convention of preparing a release in its own dedicated PR (see
-  `b5d6709`, "chore: prepare v0.2.0 release").
+  `failure_reason` category. **No schema contract, field, or enum
+  changed**: `policy_validation_failure` and `invalid_policy_bundle` were
+  both already published, six-value-enum members of `evaluation-trace`,
+  `operation-aware-decision-response`, `audit-evidence`, and
+  `gateway-audit-event`'s `failure_reason` field before this correction.
+  This is a compatibility-vector correctness fix, not a new feature or a
+  contract change. The release is prepared through a dedicated release PR,
+  consistent with this repository's existing release convention (see `b5d6709`, "chore:
+  prepare v0.2.0 release").
 
 ## [0.2.0] - 2026-07-10
 
@@ -123,9 +127,9 @@ contract versions and lifecycle states follow
     and not assembled by `basis-gateway` (that is `gateway-audit-event`'s
     role — see below). Contract version `0.1.0`, lifecycle `experimental`.
     Declares `depends_on: [contract-metadata,
-    operation-aware-decision-response, evaluation-trace, policy-bundle,
-    identity-evidence-reference, adapter-evidence-reference,
-    reason-code]`.
+operation-aware-decision-response, evaluation-trace, policy-bundle,
+identity-evidence-reference, adapter-evidence-reference,
+reason-code]`.
   - `schemas/gateway-audit-event/gateway-audit-event.yaml` — the bounded,
     gateway-emitted record of what happened at the enforcement boundary
     for one event: `event_id` and a closed `event_type`
@@ -153,55 +157,55 @@ contract versions and lifecycle states follow
     kernel evidence with enforcement facts." Contract version `0.1.0`,
     lifecycle `experimental`. Declares
     `depends_on: [contract-metadata, operation-aware-decision-response,
-    evaluation-trace, policy-bundle, audit-evidence, reason-code]`.
-  `docs/audit-evidence.md` and `docs/gateway-audit-event.md` added.
-  Cross-contract parity is enforced by tests: both contracts' reproduced
-  `outcome_values` / `evaluation_status_values` / `failure_reason_values`
-  are tested for exact agreement with `operation-aware-decision-response`
-  and `evaluation-trace`; both contracts' `bundle_version_pattern` and
-  `reason_code_pattern` are tested against their canonical source
-  contracts. State-matrix cross-object invariants are tested directly:
-  kernel `outcome: not_applicable` paired with gateway
-  `enforcement_action: deny`; kernel `evaluation_status: failed` paired
-  with `enforcement_action: deny`; a gateway-local failure (kernel
-  completed/allow, `gateway_failure_reason` set, `enforcement_action:
-  deny`) demonstrating `enforcement_action` independence from kernel
-  outcome; and `gateway_failure_reason` rejected whenever paired with
-  `enforcement_action: allow`. Every contract sets
-  `additional_properties: false` at every object level and never carries
-  an `access_token`, `id_token`, `refresh_token`, `jwt`, `bearer_token`,
-  `authorization_header`, `cookie`, `session_secret`, `client_secret`,
-  `password`, `private_key`, `api_key`, `credential`, `raw_claims`,
-  `full_claim_set`, `raw_payload`, `raw_protocol_payload`, `full_request`,
-  `request_snapshot`, `full_policy`, `policy_document`, `debug`,
-  `exception`, `stack_trace`, `traceback`, `subject_id`, `action`,
-  `resource`, `resource_type`, `http_status`, `response_status`,
-  `signature`, `signature_algorithm`, `hash_chain`, `previous_hash`, or
-  `merkle_root` field — any such field is rejected as unknown, enforced
-  by regression tests. Neither contract publishes a top-level
-  `redaction_classification` field, and neither claims YAML shape alone
-  provides immutability, tamper resistance, non-repudiation,
-  cryptographic authenticity, or chain of custody — durability and
-  storage remain explicitly a producer/deployment responsibility, per
-  ADR-0003 Section 17's "Open Questions Deferred." Does not implement
-  audit storage, retention, indexing, export, signing, tamper-evidence,
-  gateway enforcement, gateway middleware, or HTTP response behavior —
-  every one of these remains explicitly deferred. **The first-wave
-  `schemas/audit-event/audit-event.yaml` is completely unchanged** — no
-  rename, no widening, no version/field/example/validation change; its
-  `authorization_decision` event type and `allowed`/`denied`/`error`
-  outcome vocabulary remain exactly as published, never compared or
-  unified with either new contract's own vocabulary. No existing
-  contract (`decision-request`, `decision-response`, `audit-event`,
-  `action-string`, `resource-identifier`, `contract-metadata`,
-  `redaction-classification`, `reason-code`,
-  `identity-evidence-reference`, `adapter-evidence-reference`,
-  `operation-aware-decision-request`, `policy-condition`, `policy-rule`,
-  `policy-bundle`, `trace-rule-evidence`, `evaluation-trace`,
-  `operation-aware-decision-response`) changed shape, required fields,
-  optional fields, examples, or validation behavior, and none was made to
-  depend on these two new contracts. Not mandatory anywhere; no
-  implementation repository consumes PR F yet.
+  evaluation-trace, policy-bundle, audit-evidence, reason-code]`.
+    `docs/audit-evidence.md` and `docs/gateway-audit-event.md` added.
+    Cross-contract parity is enforced by tests: both contracts' reproduced
+    `outcome_values` / `evaluation_status_values` / `failure_reason_values`
+    are tested for exact agreement with `operation-aware-decision-response`
+    and `evaluation-trace`; both contracts' `bundle_version_pattern` and
+    `reason_code_pattern` are tested against their canonical source
+    contracts. State-matrix cross-object invariants are tested directly:
+    kernel `outcome: not_applicable` paired with gateway
+    `enforcement_action: deny`; kernel `evaluation_status: failed` paired
+    with `enforcement_action: deny`; a gateway-local failure (kernel
+    completed/allow, `gateway_failure_reason` set, `enforcement_action:
+deny`) demonstrating `enforcement_action` independence from kernel
+    outcome; and `gateway_failure_reason` rejected whenever paired with
+    `enforcement_action: allow`. Every contract sets
+    `additional_properties: false` at every object level and never carries
+    an `access_token`, `id_token`, `refresh_token`, `jwt`, `bearer_token`,
+    `authorization_header`, `cookie`, `session_secret`, `client_secret`,
+    `password`, `private_key`, `api_key`, `credential`, `raw_claims`,
+    `full_claim_set`, `raw_payload`, `raw_protocol_payload`, `full_request`,
+    `request_snapshot`, `full_policy`, `policy_document`, `debug`,
+    `exception`, `stack_trace`, `traceback`, `subject_id`, `action`,
+    `resource`, `resource_type`, `http_status`, `response_status`,
+    `signature`, `signature_algorithm`, `hash_chain`, `previous_hash`, or
+    `merkle_root` field — any such field is rejected as unknown, enforced
+    by regression tests. Neither contract publishes a top-level
+    `redaction_classification` field, and neither claims YAML shape alone
+    provides immutability, tamper resistance, non-repudiation,
+    cryptographic authenticity, or chain of custody — durability and
+    storage remain explicitly a producer/deployment responsibility, per
+    ADR-0003 Section 17's "Open Questions Deferred." Does not implement
+    audit storage, retention, indexing, export, signing, tamper-evidence,
+    gateway enforcement, gateway middleware, or HTTP response behavior —
+    every one of these remains explicitly deferred. **The first-wave
+    `schemas/audit-event/audit-event.yaml` is completely unchanged** — no
+    rename, no widening, no version/field/example/validation change; its
+    `authorization_decision` event type and `allowed`/`denied`/`error`
+    outcome vocabulary remain exactly as published, never compared or
+    unified with either new contract's own vocabulary. No existing
+    contract (`decision-request`, `decision-response`, `audit-event`,
+    `action-string`, `resource-identifier`, `contract-metadata`,
+    `redaction-classification`, `reason-code`,
+    `identity-evidence-reference`, `adapter-evidence-reference`,
+    `operation-aware-decision-request`, `policy-condition`, `policy-rule`,
+    `policy-bundle`, `trace-rule-evidence`, `evaluation-trace`,
+    `operation-aware-decision-response`) changed shape, required fields,
+    optional fields, examples, or validation behavior, and none was made to
+    depend on these two new contracts. Not mandatory anywhere; no
+    implementation repository consumes PR F yet.
 - `basis_schemas.OPERATION_AWARE_AUDIT_CONTRACTS` metadata listing PR F's
   two contracts in dependency-and-publication order. Additive: does not
   change `PLANNED_CONTRACTS`, `PUBLISHED_CONTRACTS`,
@@ -241,7 +245,7 @@ contract versions and lifecycle states follow
     never carries a condition's `field_path`, `operator`, `expected_value`,
     or the raw value compared. Contract version `0.1.0`, lifecycle
     `experimental`. Declares `depends_on: [contract-metadata, policy-rule,
-    policy-condition, reason-code]`.
+policy-condition, reason-code]`.
   - `schemas/evaluation-trace/evaluation-trace.yaml` — the deterministic,
     bounded explanation of one kernel evaluation: `trace_id` and
     `request_id` identity, optional `correlation_id` passthrough, an
@@ -268,7 +272,7 @@ contract versions and lifecycle states follow
     serializes an authorization outcome (ADR-0002 Section 14). Contract
     version `0.1.0`, lifecycle `experimental`. Declares
     `depends_on: [contract-metadata, operation-aware-decision-request,
-    policy-bundle, trace-rule-evidence, reason-code]`.
+policy-bundle, trace-rule-evidence, reason-code]`.
   - `schemas/operation-aware-decision-response/operation-aware-decision-response.yaml`
     — the additive vNext response contract: `request_id` echoed from PR
     C's `operation-aware-decision-request`, the identical
@@ -282,47 +286,47 @@ contract versions and lifecycle states follow
     (documented invariants, tested against the contract's own examples,
     not statically enforceable in YAML) — and an optional `reason_code` /
     `explanation`. **The existing `schemas/decision-response/
-    decision-response.yaml` is unchanged**: not renamed, replaced,
+  decision-response.yaml` is unchanged**: not renamed, replaced,
     widened, or reinterpreted; this is a separate, additive vNext contract
     surface, not a v2. Contract version `0.1.0`, lifecycle `experimental`.
     Declares `depends_on: [contract-metadata,
-    operation-aware-decision-request, policy-bundle, evaluation-trace,
-    reason-code]`.
-  `docs/trace-rule-evidence.md`, `docs/evaluation-trace.md`, and
-  `docs/operation-aware-decision-response.md` added. Cross-contract parity
-  is enforced by tests: `trace-rule-evidence`'s reproduced `effect_values`
-  are tested against `policy-rule`'s own already-verified copy;
-  `evaluation-trace`'s reproduced `bundle_version_pattern` is tested
-  against `policy-bundle`'s own pattern; all three contracts' reproduced
-  `reason_code_pattern` is tested against the canonical `reason-code`
-  contract; and the `outcome_values` / `evaluation_status_values` /
-  `failure_reason_values` vocabularies are tested for exact agreement
-  between `evaluation-trace` and `operation-aware-decision-response`.
-  Every contract sets `additional_properties: false` at every object level
-  and never carries an `access_token`, `id_token`, `refresh_token`, `jwt`,
-  `bearer_token`, `authorization_header`, `cookie`, `session_secret`,
-  `client_secret`, `password`, `private_key`, `api_key`, `credential`,
-  `raw_claims`, `full_claim_set`, `raw_payload`, `raw_protocol_payload`,
-  `full_request`, `request_snapshot`, `full_policy`, `policy_document`,
-  `debug`, `exception`, `stack_trace`, `traceback`, `gateway_enforcement`,
-  `enforcement_result`, `http_status`, or `response_status` field — any
-  such field is rejected as unknown, enforced by regression tests. Does
-  not implement rule matching, condition evaluation, deny precedence,
-  default deny, evaluation, persistence, gateway enforcement, or audit —
-  every one of these remains explicitly deferred. Evaluation trace is
-  explicitly not audit evidence (ADR-0003 Section 2): `AuditEvidence` and
-  `GatewayAuditEvent` remain deferred to PR F, which is expected to
-  reference `evaluation-trace.trace_id` and
-  `operation-aware-decision-response.request_id` rather than redefining
-  either. No existing contract (`decision-request`, `decision-response`,
-  `audit-event`, `action-string`, `resource-identifier`,
-  `contract-metadata`, `redaction-classification`, `reason-code`,
-  `identity-evidence-reference`, `adapter-evidence-reference`,
-  `operation-aware-decision-request`, `policy-condition`, `policy-rule`,
-  `policy-bundle`) changed shape, required fields, optional fields,
-  examples, or validation behavior, and none was made to depend on these
-  three new contracts. Not mandatory anywhere; no implementation
-  repository consumes PR E yet.
+  operation-aware-decision-request, policy-bundle, evaluation-trace,
+  reason-code]`.
+    `docs/trace-rule-evidence.md`, `docs/evaluation-trace.md`, and
+    `docs/operation-aware-decision-response.md` added. Cross-contract parity
+    is enforced by tests: `trace-rule-evidence`'s reproduced `effect_values`
+    are tested against `policy-rule`'s own already-verified copy;
+    `evaluation-trace`'s reproduced `bundle_version_pattern` is tested
+    against `policy-bundle`'s own pattern; all three contracts' reproduced
+    `reason_code_pattern` is tested against the canonical `reason-code`
+    contract; and the `outcome_values` / `evaluation_status_values` /
+    `failure_reason_values` vocabularies are tested for exact agreement
+    between `evaluation-trace` and `operation-aware-decision-response`.
+    Every contract sets `additional_properties: false` at every object level
+    and never carries an `access_token`, `id_token`, `refresh_token`, `jwt`,
+    `bearer_token`, `authorization_header`, `cookie`, `session_secret`,
+    `client_secret`, `password`, `private_key`, `api_key`, `credential`,
+    `raw_claims`, `full_claim_set`, `raw_payload`, `raw_protocol_payload`,
+    `full_request`, `request_snapshot`, `full_policy`, `policy_document`,
+    `debug`, `exception`, `stack_trace`, `traceback`, `gateway_enforcement`,
+    `enforcement_result`, `http_status`, or `response_status` field — any
+    such field is rejected as unknown, enforced by regression tests. Does
+    not implement rule matching, condition evaluation, deny precedence,
+    default deny, evaluation, persistence, gateway enforcement, or audit —
+    every one of these remains explicitly deferred. Evaluation trace is
+    explicitly not audit evidence (ADR-0003 Section 2): `AuditEvidence` and
+    `GatewayAuditEvent` remain deferred to PR F, which is expected to
+    reference `evaluation-trace.trace_id` and
+    `operation-aware-decision-response.request_id` rather than redefining
+    either. No existing contract (`decision-request`, `decision-response`,
+    `audit-event`, `action-string`, `resource-identifier`,
+    `contract-metadata`, `redaction-classification`, `reason-code`,
+    `identity-evidence-reference`, `adapter-evidence-reference`,
+    `operation-aware-decision-request`, `policy-condition`, `policy-rule`,
+    `policy-bundle`) changed shape, required fields, optional fields,
+    examples, or validation behavior, and none was made to depend on these
+    three new contracts. Not mandatory anywhere; no implementation
+    repository consumes PR E yet.
 - `basis_schemas.OPERATION_AWARE_RESPONSE_TRACE_CONTRACTS` metadata listing
   PR E's three contracts in dependency-and-publication order. Additive:
   does not change `PLANNED_CONTRACTS`, `PUBLISHED_CONTRACTS`,
@@ -380,8 +384,8 @@ contract versions and lifecycle states follow
     future deterministic tie-breaker instead of inventing ordering
     semantics. Contract version `0.1.0`, lifecycle `experimental`. Declares
     `depends_on: [contract-metadata, policy-condition,
-    operation-aware-decision-request, reason-code, action-string,
-    resource-identifier]`.
+operation-aware-decision-request, reason-code, action-string,
+resource-identifier]`.
   - `schemas/policy-bundle/policy-bundle.yaml` — the unit of policy
     identity, versioning, scope, ownership, provenance, and rule grouping:
     `bundle_id`, `bundle_version` (this bundle's own content version) and
@@ -404,38 +408,38 @@ contract versions and lifecycle states follow
     `basis-core` validator/runtime process, never self-asserted. Contract
     version `0.1.0`, lifecycle `experimental`. Declares
     `depends_on: [contract-metadata, policy-rule]`.
-  `docs/policy-condition.md`, `docs/policy-rule.md`, and
-  `docs/policy-bundle.md` added. Cross-contract parity is enforced by tests:
-  `policy-rule`'s reproduced `action_pattern` / `resource_pattern` /
-  `resource_type_pattern` / `open_identifier_pattern` /
-  `operation_intent_values` / `reason_code_pattern` are tested against the
-  canonical `action-string`, `resource-identifier`,
-  `operation-aware-decision-request`, and `reason-code` contracts;
-  `policy-bundle`'s reproduced scope patterns are tested against
-  `policy-rule`'s own already-verified copies; nested condition and rule
-  shapes are tested for parity against their standalone contracts. Every
-  contract sets `additional_properties: false` at every object level and
-  never carries an `access_token`, `id_token`, `refresh_token`, `jwt`,
-  `bearer_token`, `authorization_header`, `cookie`, `session_secret`,
-  `client_secret`, `password`, `private_key`, `api_key`, `raw_claims`,
-  `raw_payload`, `raw_protocol_payload`, `device_secret`, `script`, `code`,
-  `executable`, `command`, `shell`, `python`, `javascript`, `rego`,
-  `cedar`, `cel`, `wasm`, `sql`, `template`, or `expression` field — any
-  such field is rejected as unknown, enforced by regression tests. Does not
-  implement policy loading, storage, distribution, synchronization,
-  signing, signature verification, tamper-evident packaging, an approval
-  workflow, an authoring UI, a simulation UI, deployment behavior,
-  multi-bundle hierarchy, policy federation, tenant/site policy delegation,
-  runtime evaluation, condition execution, gateway enforcement, or audit
-  persistence — every one of these remains explicitly deferred, per
-  ADR-0004 Section 18. No existing contract (`decision-request`,
-  `decision-response`, `audit-event`, `action-string`,
-  `resource-identifier`, `contract-metadata`, `redaction-classification`,
-  `reason-code`, `identity-evidence-reference`,
-  `adapter-evidence-reference`, `operation-aware-decision-request`)
-  changed shape, required fields, optional fields, examples, or validation
-  behavior, and none was made to depend on these three new contracts. Not
-  mandatory anywhere; no implementation repository consumes PR D yet.
+    `docs/policy-condition.md`, `docs/policy-rule.md`, and
+    `docs/policy-bundle.md` added. Cross-contract parity is enforced by tests:
+    `policy-rule`'s reproduced `action_pattern` / `resource_pattern` /
+    `resource_type_pattern` / `open_identifier_pattern` /
+    `operation_intent_values` / `reason_code_pattern` are tested against the
+    canonical `action-string`, `resource-identifier`,
+    `operation-aware-decision-request`, and `reason-code` contracts;
+    `policy-bundle`'s reproduced scope patterns are tested against
+    `policy-rule`'s own already-verified copies; nested condition and rule
+    shapes are tested for parity against their standalone contracts. Every
+    contract sets `additional_properties: false` at every object level and
+    never carries an `access_token`, `id_token`, `refresh_token`, `jwt`,
+    `bearer_token`, `authorization_header`, `cookie`, `session_secret`,
+    `client_secret`, `password`, `private_key`, `api_key`, `raw_claims`,
+    `raw_payload`, `raw_protocol_payload`, `device_secret`, `script`, `code`,
+    `executable`, `command`, `shell`, `python`, `javascript`, `rego`,
+    `cedar`, `cel`, `wasm`, `sql`, `template`, or `expression` field — any
+    such field is rejected as unknown, enforced by regression tests. Does not
+    implement policy loading, storage, distribution, synchronization,
+    signing, signature verification, tamper-evident packaging, an approval
+    workflow, an authoring UI, a simulation UI, deployment behavior,
+    multi-bundle hierarchy, policy federation, tenant/site policy delegation,
+    runtime evaluation, condition execution, gateway enforcement, or audit
+    persistence — every one of these remains explicitly deferred, per
+    ADR-0004 Section 18. No existing contract (`decision-request`,
+    `decision-response`, `audit-event`, `action-string`,
+    `resource-identifier`, `contract-metadata`, `redaction-classification`,
+    `reason-code`, `identity-evidence-reference`,
+    `adapter-evidence-reference`, `operation-aware-decision-request`)
+    changed shape, required fields, optional fields, examples, or validation
+    behavior, and none was made to depend on these three new contracts. Not
+    mandatory anywhere; no implementation repository consumes PR D yet.
 - `basis_schemas.OPERATION_AWARE_POLICY_CONTRACTS` metadata listing PR D's
   three contracts in dependency-and-publication order. Additive: does not
   change `PLANNED_CONTRACTS`, `PUBLISHED_CONTRACTS`,
@@ -467,8 +471,8 @@ contract versions and lifecycle states follow
   `classification` / `constraint_ids`), `environment_context` (`mode` /
   `condition_ids`), `risk_context` (`classification` / `score`),
   `evaluation_time`, and `expected_policy_version`. Declares `depends_on:
-  [contract-metadata, action-string, resource-identifier,
-  identity-evidence-reference, adapter-evidence-reference]`. Never carries an
+[contract-metadata, action-string, resource-identifier,
+identity-evidence-reference, adapter-evidence-reference]`. Never carries an
   `access_token`, `id_token`, `refresh_token`, `jwt`, `bearer_token`,
   `authorization_header`, `cookie`, `session_secret`, `client_secret`,
   `password`, `private_key`, `api_key`, `raw_claims`, `full_claim_set`,
@@ -524,7 +528,7 @@ contract versions and lifecycle states follow
   `normalization_version` / `mapping_version` provenance,
   `redaction_classification`, and optional `request_id` / `correlation_id`.
   Contract version `0.1.0`, lifecycle `experimental`. Declares `depends_on:
-  [contract-metadata, redaction-classification]`. Never carries
+[contract-metadata, redaction-classification]`. Never carries
   `raw_payload`, `raw_protocol_payload`, `packet`, `frame`, `credential`,
   `password`, `api_key`, `private_key`, or `unredacted_device_secret` — any
   such field is rejected as unknown. Does not define adapter normalization
@@ -559,12 +563,12 @@ contract versions and lifecycle states follow
   no redaction behavior implemented. `docs/redaction-classification.md` added.
 - **Reason code contract published** (second-wave, PR A).
   `schemas/reason-code/reason-code.yaml` publishes the structural format a
-  reason code must satisfy (lowercase snake_case token,
-  `^[a-z][a-z0-9]*(_[a-z0-9]+)*$`), from ADR-0003 §12 and the policy/rule
-  model §13. Contract version `0.1.0`, lifecycle `experimental`. Declares
-  `depends_on: [contract-metadata]`. Deliberately not a closed enum — the
-  final reason-code vocabulary remains deferred to the contracts that carry a
-  `reason_code` field in practice. `docs/reason-code.md` added.
+  reason code must satisfy (lowercase snake*case token,
+  `^[a-z][a-z0-9]\*(*[a-z0-9]+)\*$`), from ADR-0003 §12 and the policy/rule
+model §13. Contract version `0.1.0`, lifecycle `experimental`. Declares
+`depends_on: [contract-metadata]`. Deliberately not a closed enum — the
+final reason-code vocabulary remains deferred to the contracts that carry a
+`reason_code`field in practice.`docs/reason-code.md` added.
 - `docs/operation-aware-schema-readiness.md` — tracks the ADR-0005 PR A–G
   publication order and status, separately from the first-wave
   `docs/migration-plan.md`, which is unaffected and remains complete.
@@ -599,7 +603,7 @@ be added through `basis-architecture` governance.
   (`docs/architecture/ecosystem-contract-inventory.md`, §3.10) and implemented by
   `basis-core`'s `AuditEvent` (`audit/events.py`, `audit-event.schema.json`).
   Contract version `0.1.0`, lifecycle `experimental`. It declares `depends_on:
-  [decision-request, decision-response]`: an audit record holds the evidence of an
+[decision-request, decision-response]`: an audit record holds the evidence of an
   evaluation and correlates to both by `request_id`. Required fields are
   `event_id`, `event_type`, `action`, and `timestamp`; all other fields
   (correlation ids, subject context, resource, decision evidence, per-rule
