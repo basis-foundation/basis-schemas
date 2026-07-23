@@ -17,10 +17,11 @@ rule_evidence:
     effect: allow
     rule_result: matched
     reason_code: allow_rule_matched
+    explanation: Operators may write HVAC setpoints.
   - rule_id: deny-control-during-interlock
     effect: deny
     rule_result: matched
     reason_code: deny_rule_matched
-    explanation: Control-affecting operation denied while an interlock is engaged.
+    explanation: Control-affecting operations are denied while an interlock is engaged.
 reason_code: deny_rule_matched
-explanation: Deny precedence applied; an interlock-scoped deny rule matched.
+explanation: null

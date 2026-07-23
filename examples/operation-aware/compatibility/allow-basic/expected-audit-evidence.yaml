@@ -31,6 +31,6 @@ adapter_evidence_reference:
   protocol: bacnet
   redaction_classification: reference_only
 reason_code: allow_rule_matched
-explanation: Operator role matched an allow rule for read:ahu.
+explanation: null
 recorded_at: "2026-07-09T09:00:01Z"
 schema_version: "0.1.0"

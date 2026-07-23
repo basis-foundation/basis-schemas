@@ -13,4 +13,4 @@ trace_id: trace-compat-default-deny-001
 audit_evidence_id: audit-compat-default-deny-001
 enforcement_action: deny
 reason_code: no_allow_rule_matched
-explanation: Gateway enforced the kernel default-deny decision.
+explanation: null

@@ -158,7 +158,11 @@ matched. The trace records both matched rules; array order in
   event separately records `enforcement_action: deny` (fail-closed
   enforcement on a kernel result that was not itself a policy deny); the
   kernel `outcome: not_applicable` is never rewritten as `deny` anywhere in
-  this scenario's artifacts.
+  this scenario's artifacts. `bundle_id`/`bundle_version` are nonetheless
+  retained on every result artifact that carries them: the bundle whose
+  scope was checked and found not to cover the request is a known, specific,
+  typed bundle, and reporting its identity is provenance for *which* bundle
+  was checked, never a claim that it applied (see [Section 18](#18-evidence-provenance-semantics)).
 - **Invalid-policy scenario (`invalid-policy-bundle`):** `invalid-policy-bundle.yaml`
   intentionally fails `policy-bundle`'s own published field policy (duplicate
   `rule_id` values — the same invalid case that contract's own `examples:`
@@ -174,7 +178,12 @@ matched. The trace records both matched rules; array order in
   `invalid_policy_bundle` remains a valid failure category — it applies to a
   bundle that is malformed at the shape level (a missing required field, a
   malformed rule, an invalid enum value, and similar), which is not what this
-  scenario's fixture demonstrates. `evaluation_status: failed` and
+  scenario's fixture demonstrates. `bundle_id`/`bundle_version` are retained
+  on every result artifact that carries them: the bundle constructs
+  successfully as a well-formed, identified typed object before being
+  rejected by the cross-rule `rule_id`-uniqueness invariant, so it remains
+  the specific policy artifact that was evaluated and rejected (see
+  [Section 18](#18-evidence-provenance-semantics)). `evaluation_status: failed` and
   `outcome: null` together, never `deny` — an evaluation failure is not a
   policy decision (ADR-0002 Section 14). The gateway event separately
   records `enforcement_action: deny` (fail-closed on a kernel failure).
@@ -299,3 +308,52 @@ moving `main` branch, and does not add these vectors to the wheel merely to
 make consumption more convenient — doing so would be a packaging change
 outside this PR's scope and is left to future release-engineering decisions
 if repository policy ever requires it.
+
+## 18. Evidence-provenance semantics
+
+`v0.2.2` corrected three narrow evidence-provenance disagreements between
+these fixtures and `basis-core`'s merged operation-aware implementation,
+governed by `basis-architecture` (`docs/architecture/operation-aware-evidence-provenance-semantics.md`).
+This section states the governed semantics these fixtures now encode; it
+does not restate the full clarification.
+
+**Top-level explanation.** `explanation` on `expected-operation-aware-decision-response.yaml`,
+`expected-evaluation-trace.yaml`, `expected-audit-evidence.yaml`, and
+`expected-gateway-audit-event.yaml` is optional and non-authoritative.
+`reason_code` remains the authoritative machine-readable explanation of a
+completed or failed evaluation. These fixtures do not require synthesized
+aggregate prose merely to populate this field — every scenario now carries
+`explanation: null` at the top level, because no governed stage supplies an
+aggregate sentence describing an evaluation as a whole.
+
+**Rule evidence.** A `trace-rule-evidence` entry's `reason_code`/
+`explanation` are the referenced rule's own authored fields, projected by
+that rule's `rule_result`:
+
+| Rule result   | Authored `reason_code` | Authored `explanation` |
+| ------------- | ----------------------: | -----------------------: |
+| `matched`     | preserved verbatim       | preserved verbatim        |
+| `not_matched` | omitted (`null`)         | omitted (`null`)          |
+| `skipped`     | omitted (`null`)         | omitted (`null`)          |
+| `error`       | governed error reason code, never the rule's authored success/deny reason code | governed error explanation, or `null` — never the rule's authored success/deny explanation |
+
+A matched-but-non-decisive rule (for example, the matched `ALLOW` rule in
+`deny-precedence`, where a matched `DENY` rule determines the final
+outcome) is still genuine matched evidence and carries its own authored
+`reason_code`/`explanation` verbatim — deny precedence governs the final
+authorization outcome, not whether the `ALLOW` rule actually matched. None
+of the five canonical scenarios currently exercises `rule_result: error`;
+see [Section 14, "Deferred scenarios."](#14-deferred-scenarios)
+
+**Bundle identity.** `bundle_id`/`bundle_version` are retained on every
+result artifact that carries them whenever a trustworthy typed policy
+bundle exists for the evaluation — including a completed `NOT_APPLICABLE`
+evaluation (`not-applicable`) and a typed semantic policy-validation
+failure (`invalid-policy-bundle`) — independent of whether that bundle's
+scope covered the request or passed semantic validation. Bundle identity is
+provenance for *which* bundle was checked or rejected; it is never a claim
+that the bundle applied, matched, or granted anything.
+
+This correction changed no schema shape, no authorization outcome, no
+`failure_reason` classification, and no scenario count — see `CHANGELOG.md`
+and `docs/release-notes.md` for the full `v0.2.2` summary.

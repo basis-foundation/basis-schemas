@@ -10,5 +10,5 @@ bundle_id: bundle-compat-default-deny
 bundle_version: "1.0.0"
 matched_rule_ids: []
 reason_code: no_allow_rule_matched
-explanation: No allow rule matched this vendor request; default deny applied.
+explanation: null
 recorded_at: "2026-07-09T09:10:01Z"

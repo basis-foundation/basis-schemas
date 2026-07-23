@@ -10,6 +10,89 @@ contract versions and lifecycle states follow
 
 ## [Unreleased]
 
+## [0.2.2] - 2026-07-22
+
+### Fixed
+
+- **Corrected canonical operation-aware compatibility vector fixtures to
+  agree with `basis-architecture`'s newly merged evidence-provenance
+  clarification** (`docs/architecture/operation-aware-evidence-provenance-semantics.md`).
+  This clarification resolved three narrow evidence-provenance disagreements
+  surfaced when `basis-core`'s merged operation-aware implementation was
+  first compared, field by field, against these vectors. This release
+  corrects the fixtures, not the architecture: it introduces no new
+  authorization semantics, no new schema field, no new reason-code
+  vocabulary, and no change to any authorization outcome, `failure_reason`
+  classification, or scenario count.
+  - **Top-level `explanation` is no longer synthesized aggregate prose.**
+    `explanation` on `expected-operation-aware-decision-response.yaml`,
+    `expected-evaluation-trace.yaml`, `expected-audit-evidence.yaml`, and
+    `expected-gateway-audit-event.yaml` is optional and non-authoritative;
+    `reason_code` remains the authoritative machine-readable explanation.
+    Every one of the five canonical scenarios now carries
+    `explanation: null` at the top level in all four artifacts, replacing
+    hand-authored aggregate sentences ("Operator role matched an allow rule
+    for read:ahu.", "Deny precedence applied; an interlock-scoped deny rule
+    matched.", and similar) that no governed evaluation stage actually
+    supplies.
+  - **Matched rule evidence now preserves authored `reason_code`/
+    `explanation` exactly.** `allow-basic`'s matched rule's `explanation`
+    now reads "Operators may read AHU telemetry." (the rule's own authored
+    text in `policy-bundle.yaml`), not a synthesized sentence.
+    `deny-precedence`'s matched `ALLOW` rule (`allow-operator-write-hvac-setpoint`)
+    now carries its authored `explanation`, "Operators may write HVAC
+    setpoints." — previously omitted even though the rule genuinely
+    matched; deny precedence governs the final outcome, not whether the
+    `ALLOW` rule matched. `deny-precedence`'s matched `DENY` rule's
+    `explanation` is corrected from "Control-affecting **operation** denied
+    while an interlock is engaged." to "Control-affecting **operations**
+    are denied while an interlock is engaged." — matching
+    `policy-bundle.yaml`'s own authored text exactly, correcting a
+    previously undetected wording drift between the authored rule and the
+    expected trace.
+  - **Non-matched and skipped rules omit authored match rationale.**
+    `default-deny`'s one candidate rule was already correctly
+    `rule_result: not_matched` with no `reason_code`/`explanation`; this
+    release adds regression coverage proving the harness would catch a
+    future regression here. No canonical scenario currently exercises
+    `rule_result: skipped` or `rule_result: error`; both remain deferred
+    (see `examples/operation-aware/compatibility/README.md`, "Deferred
+    scenarios").
+  - **Bundle identity is now retained for `NOT_APPLICABLE` and for the
+    typed semantic policy-validation failure.** `not-applicable`'s
+    `bundle_id`/`bundle_version` (previously `null` on the response, and
+    absent on the trace, audit evidence, and gateway event) now carry
+    `bundle-compat-hvac-scope` / `"1.0.0"` — the identity of the bundle
+    whose scope was checked and found not to cover the request — on every
+    artifact that carries the fields. `invalid-policy-bundle`'s
+    `bundle_id`/`bundle_version` (previously absent everywhere) now carry
+    `bundle-compat-invalid-policy` / `"1.0.0"` — the identity of the typed
+    bundle that constructed successfully before being rejected for its
+    duplicate `rule_id` values. Bundle identity is provenance for which
+    bundle was checked or rejected; it is never a claim that the bundle
+    applied, matched, or granted anything. The `invalid-policy-bundle`
+    scenario's `failure_reason: policy_validation_failure` classification
+    (corrected in `v0.2.1`) is unchanged and reverified by this release.
+  - Updated all four `expected-*.yaml` artifacts in every one of the five
+    scenario directories under
+    `examples/operation-aware/compatibility/`; updated
+    `examples/operation-aware/compatibility/README.md` and
+    `docs/operation-aware-compatibility-vectors.md` with a new
+    "Evidence-provenance semantics" section documenting the governed
+    null/optional-explanation, rule-evidence-projection, and
+    bundle-identity-retention rules; added and strengthened
+    `tests/test_operation_aware_compatibility_vectors.py` coverage,
+    including new cross-artifact invariants (top-level explanation
+    nullness, matched-rule authored-text preservation, not-matched/skipped
+    rationale omission, and bundle-identity retention for `not-applicable`
+    and `invalid-policy-bundle`) and paired negative-mutation tests proving
+    the harness detects drift in each. **No schema contract, field, or
+    enum changed**, and **no authorization outcome changed**: every
+    scenario's `outcome` / `evaluation_status` / `failure_reason` is
+    identical to `v0.2.1`. This is a compatibility-fixture correction
+    aligned to newly clarified architecture, not a new evaluator feature,
+    schema family, reason-code vocabulary, or breaking change.
+
 ## [0.2.1] - 2026-07-18
 
 ### Fixed

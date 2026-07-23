@@ -12,7 +12,9 @@ request_id: req-compat-invalid-policy-001
 evaluation_status: failed
 outcome: null
 failure_reason: policy_validation_failure
+bundle_id: bundle-compat-invalid-policy
+bundle_version: "1.0.0"
 trace_id: trace-compat-invalid-policy-001
 audit_evidence_id: audit-compat-invalid-policy-001
 enforcement_action: deny
-explanation: Kernel evaluation failed because the policy bundle declared duplicate rule IDs; gateway fail-closed policy denied the request.
+explanation: null

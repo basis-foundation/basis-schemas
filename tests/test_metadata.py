@@ -124,7 +124,7 @@ def test_package_version_is_current_release() -> None:
     # forgotten one) fails loudly here rather than only being caught by the
     # weaker pyproject-agreement check above, which would pass even if both
     # values were accidentally left at the prior release.
-    assert basis_schemas.__version__ == "0.2.1"
+    assert basis_schemas.__version__ == "0.2.2"
 
 
 def test_planned_contracts_match_migration_order() -> None:

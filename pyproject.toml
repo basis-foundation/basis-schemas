@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "basis-schemas"
-version = "0.2.1"
+version = "0.2.2"
 description = "Published shared contracts for the BASIS ecosystem: the six first-wave contracts (action vocabulary, action string, resource identifier, decision request/response, and audit event) plus fourteen additive operation-aware second-wave contracts (shared metadata, evidence references, operation-aware decision request/response, policy bundle/rule/condition, evaluation trace, and audit evidence/gateway audit event)."
 readme = "README.md"
 requires-python = ">=3.10"

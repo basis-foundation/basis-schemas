@@ -17,5 +17,5 @@ matched_rule_ids:
   - allow-operator-write-hvac-setpoint
   - deny-control-during-interlock
 reason_code: deny_rule_matched
-explanation: Deny precedence applied; an interlock-scoped deny rule matched.
+explanation: null
 recorded_at: "2026-07-09T09:05:01Z"

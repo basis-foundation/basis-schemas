@@ -8,4 +8,4 @@ bundle_id: bundle-compat-default-deny
 bundle_version: "1.0.0"
 trace_id: trace-compat-default-deny-001
 reason_code: no_allow_rule_matched
-explanation: No allow rule matched this vendor request; default deny applied.
+explanation: null

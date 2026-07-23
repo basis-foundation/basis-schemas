@@ -704,6 +704,62 @@ def _trace_rules_exist_in_policy(scenario: dict[str, dict]) -> bool:
 
 
 # ---------------------------------------------------------------------------
+# Evidence-provenance invariants (basis-architecture's operation-aware
+# evidence-provenance semantics clarification: "Top-Level Explanation
+# Provenance," "Rule-Evidence Projection," and "Bundle Identity Provenance").
+# Pure functions over a loaded scenario dict, following the same pattern as
+# the cross-artifact invariants above, so they can be reused both for the
+# canonical scenarios and for the negative mutation tests below.
+# ---------------------------------------------------------------------------
+
+
+def _authored_rules_by_id(policy: dict) -> dict[str, dict]:
+    return {rule["rule_id"]: rule for rule in policy.get("rules", [])}
+
+
+def _top_level_explanations_are_null(scenario: dict[str, dict]) -> bool:
+    return all(
+        scenario[name].get("explanation") is None
+        for name in ("response", "trace", "audit", "gateway")
+    )
+
+
+def _matched_rule_evidence_matches_authored(scenario: dict[str, dict]) -> bool:
+    rules_by_id = _authored_rules_by_id(scenario["policy"])
+    for entry in scenario["trace"].get("rule_evidence", []):
+        if entry.get("rule_result") != "matched":
+            continue
+        rule = rules_by_id.get(entry["rule_id"])
+        if rule is None:
+            return False
+        if entry.get("reason_code") != rule.get("reason_code"):
+            return False
+        if entry.get("explanation") != rule.get("explanation"):
+            return False
+    return True
+
+
+def _not_matched_or_skipped_omit_rationale(scenario: dict[str, dict]) -> bool:
+    for entry in scenario["trace"].get("rule_evidence", []):
+        if entry.get("rule_result") not in ("not_matched", "skipped"):
+            continue
+        if entry.get("reason_code") is not None or entry.get("explanation") is not None:
+            return False
+    return True
+
+
+def _bundle_identity_matches_policy(scenario: dict[str, dict]) -> bool:
+    expected_id = scenario["policy"].get("bundle_id")
+    expected_version = scenario["policy"].get("bundle_version")
+    for name in ("response", "trace", "audit", "gateway"):
+        if scenario[name].get("bundle_id") != expected_id:
+            return False
+        if scenario[name].get("bundle_version") != expected_version:
+            return False
+    return True
+
+
+# ---------------------------------------------------------------------------
 # Discovery
 # ---------------------------------------------------------------------------
 
@@ -1010,6 +1066,106 @@ def test_invalid_policy_bundle_no_reason_code_invented() -> None:
 
 
 # ---------------------------------------------------------------------------
+# Evidence-provenance semantics (basis-architecture's operation-aware
+# evidence-provenance semantics clarification). See
+# docs/operation-aware-compatibility-vectors.md, "Evidence-provenance
+# semantics," for the conceptual summary these tests enforce.
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize("scenario", sorted(SCENARIOS))
+def test_top_level_explanation_is_null_across_all_result_artifacts(scenario: str) -> None:
+    """No canonical fixture requires basis-core to synthesize aggregate,
+    human-readable top-level explanation prose. explanation is optional and
+    non-authoritative; reason_code remains the authoritative machine-
+    readable explanation. Null is the correct, complete, expected value when
+    no governed stage supplies a top-level explanation -- not a placeholder
+    for a missing feature.
+    """
+    assert _top_level_explanations_are_null(_load_scenario(scenario))
+
+
+@pytest.mark.parametrize("scenario", [s for s, cfg in SCENARIOS.items() if cfg["policy_valid"]])
+def test_matched_rule_evidence_preserves_authored_reason_and_explanation(scenario: str) -> None:
+    """A matched rule's trace-rule-evidence reason_code/explanation are that
+    rule's own authored fields, preserved verbatim -- never synthesized
+    replacement prose. Applies equally to a matched-but-non-decisive ALLOW
+    rule under deny precedence: deny precedence governs the final outcome,
+    not whether the ALLOW rule genuinely matched.
+    """
+    assert _matched_rule_evidence_matches_authored(_load_scenario(scenario))
+
+
+@pytest.mark.parametrize("scenario", [s for s, cfg in SCENARIOS.items() if cfg["policy_valid"]])
+def test_not_matched_and_skipped_rules_omit_authored_rationale(scenario: str) -> None:
+    """A rule that did not match, or was never reached, emitted no reason
+    code and authored no explanation for this evaluation -- its evidence
+    entry must not present its authored success/deny rationale as though it
+    had.
+    """
+    assert _not_matched_or_skipped_omit_rationale(_load_scenario(scenario))
+
+
+def test_deny_precedence_matched_allow_rule_is_evidenced_with_authored_text() -> None:
+    """The specific case the clarification calls out by name: a matched-but-
+    non-decisive ALLOW rule in the deny-precedence scenario remains genuine
+    matched evidence, carrying its own non-null authored reason_code and
+    explanation, not omitted merely because a DENY rule also matched.
+    """
+    s = _load_scenario("deny-precedence")
+    rules_by_id = _authored_rules_by_id(s["policy"])
+    allow_matches = [
+        e
+        for e in s["trace"]["rule_evidence"]
+        if e["effect"] == "allow" and e["rule_result"] == "matched"
+    ]
+    assert allow_matches, "deny-precedence scenario must record a matched ALLOW rule"
+    for entry in allow_matches:
+        rule = rules_by_id[entry["rule_id"]]
+        assert entry.get("reason_code") == rule.get("reason_code")
+        assert entry.get("explanation") == rule.get("explanation")
+        assert entry.get("explanation") is not None
+
+
+def test_no_rule_result_error_in_current_canonical_scenarios() -> None:
+    """The governed error-evidence shape (an errored rule using governed
+    error evidence, never its authored success/deny rationale) is not
+    exercised by any of the five current canonical scenarios -- deliberately
+    deferred (see README.md, "Deferred scenarios": condition-evaluation-
+    error). This test documents that fact; it is expected to be updated
+    alongside a real governed error-evidence fixture if a future PR adds a
+    sixth scenario.
+    """
+    for scenario in SCENARIOS:
+        s = _load_scenario(scenario)
+        assert not any(
+            entry.get("rule_result") == "error" for entry in s["trace"]["rule_evidence"]
+        ), f"{scenario}: unexpectedly has rule_result: error; update this test with the new fixture"
+
+
+def test_not_applicable_retains_bundle_identity() -> None:
+    """A NOT_APPLICABLE outcome preserves the checked bundle's identity as
+    provenance for which bundle was checked -- not a claim that the bundle
+    applied, matched, or granted anything.
+    """
+    s = _load_scenario("not-applicable")
+    assert s["policy"].get("bundle_id") is not None
+    assert _bundle_identity_matches_policy(s)
+
+
+def test_invalid_policy_bundle_retains_bundle_identity() -> None:
+    """A typed semantic policy-validation failure preserves the rejected
+    bundle's identity: the bundle constructed successfully as a well-formed,
+    identified typed object before being rejected by the cross-rule
+    rule_id-uniqueness invariant, so its identity remains known and
+    reportable.
+    """
+    s = _load_scenario("invalid-policy-bundle")
+    assert s["policy"].get("bundle_id") is not None
+    assert _bundle_identity_matches_policy(s)
+
+
+# ---------------------------------------------------------------------------
 # Security / synthetic-data policy
 # ---------------------------------------------------------------------------
 
@@ -1188,6 +1344,47 @@ def test_mutation_valid_policy_bundle_becomes_invalid_with_injected_duplicate() 
     assert not validate_policy_bundle(bundle), (
         "duplicate rule_id should invalidate an otherwise-valid bundle"
     )
+
+
+def test_mutation_synthesized_top_level_explanation_is_detected() -> None:
+    scenario = _load_scenario("allow-basic")
+    scenario["response"]["explanation"] = "A synthesized aggregate sentence."
+    assert not _top_level_explanations_are_null(scenario)
+
+
+def test_mutation_matched_rule_explanation_diverging_from_authored_text_is_detected() -> None:
+    scenario = _load_scenario("allow-basic")
+    scenario["trace"]["rule_evidence"][0]["explanation"] = "A different, synthesized sentence."
+    assert not _matched_rule_evidence_matches_authored(scenario)
+
+
+def test_mutation_matched_rule_reason_code_diverging_from_authored_value_is_detected() -> None:
+    scenario = _load_scenario("allow-basic")
+    scenario["trace"]["rule_evidence"][0]["reason_code"] = "deny_rule_matched"
+    assert not _matched_rule_evidence_matches_authored(scenario)
+
+
+def test_mutation_not_matched_rule_gaining_authored_rationale_is_detected() -> None:
+    scenario = _load_scenario("default-deny")
+    entry = scenario["trace"]["rule_evidence"][0]
+    assert entry["rule_result"] == "not_matched"
+    entry["reason_code"] = "allow_rule_matched"
+    entry["explanation"] = "Operators may read AHU telemetry."
+    assert not _not_matched_or_skipped_omit_rationale(scenario)
+
+
+def test_mutation_not_applicable_bundle_identity_nulled_out_is_detected() -> None:
+    scenario = _load_scenario("not-applicable")
+    scenario["response"]["bundle_id"] = None
+    scenario["response"]["bundle_version"] = None
+    assert not _bundle_identity_matches_policy(scenario)
+
+
+def test_mutation_invalid_policy_bundle_identity_nulled_out_is_detected() -> None:
+    scenario = _load_scenario("invalid-policy-bundle")
+    scenario["trace"]["bundle_id"] = None
+    scenario["trace"]["bundle_version"] = None
+    assert not _bundle_identity_matches_policy(scenario)
 
 
 # ---------------------------------------------------------------------------
