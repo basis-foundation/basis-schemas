@@ -207,7 +207,29 @@ reasoning, in the companion README's
 section. None of this deferral changes any published contract; it is a
 scope decision about which canonical examples to publish now.
 
-## 15. Second-wave completion
+## 15. Evidence-provenance correction (`v0.2.2`)
+
+`v0.2.2` corrected three narrow evidence-provenance disagreements between
+these fixtures and `basis-core`'s merged operation-aware implementation,
+resolved by a `basis-architecture` clarification
+(`docs/architecture/operation-aware-evidence-provenance-semantics.md`):
+top-level `explanation` is optional and non-authoritative and is not
+synthesized merely to populate the field (fixtures now carry
+`explanation: null` at the top level throughout); `trace-rule-evidence`
+entries project a rule's authored `reason_code`/`explanation` by
+`rule_result` (preserved verbatim when `matched`, including a
+matched-but-non-decisive rule under deny precedence; omitted when
+`not_matched` or `skipped`); and `bundle_id`/`bundle_version` are retained
+for a completed `NOT_APPLICABLE` evaluation and for a typed semantic
+policy-validation failure, as provenance for which bundle was checked or
+rejected. See the companion README's
+["Evidence-provenance semantics"](../examples/operation-aware/compatibility/README.md#18-evidence-provenance-semantics)
+section for the full governed-semantics summary and `CHANGELOG.md` /
+`docs/release-notes.md` for the release-level summary. This correction
+changed no schema shape, no authorization outcome, no `failure_reason`
+classification, and no scenario count.
+
+## 16. Second-wave completion
 
 With PR G published, every PR named in ADR-0005's recommended publication
 order (PR A through PR G) is published. This closes the operation-aware

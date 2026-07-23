@@ -19,5 +19,5 @@ audit_evidence_id: audit-compat-allow-001
 gateway_id: gateway-compat-vectors-01
 enforcement_action: allow
 reason_code: allow_rule_matched
-explanation: Gateway enforced the kernel allow decision.
+explanation: null
 schema_version: "0.1.0"

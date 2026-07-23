@@ -16,4 +16,4 @@ rule_evidence:
     effect: allow
     rule_result: not_matched
 reason_code: no_allow_rule_matched
-explanation: No allow rule matched this vendor request; default deny applied.
+explanation: null

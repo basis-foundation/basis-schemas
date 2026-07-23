@@ -7,6 +7,66 @@ PR-by-PR history; this document distills that history into what a
 downstream consumer (`basis-core`, `basis-gateway`, `basis-adapters`,
 `basis-console`) actually needs to know before depending on a release.
 
+## v0.2.2 — Evidence-Provenance Fixture Correction
+
+**This is a patch release.** It corrects canonical operation-aware
+compatibility-vector fixture semantics to agree with a newly merged
+`basis-architecture` clarification; it publishes no new contract, changes
+no contract shape, field, version, or enum, and does not change any
+authorization outcome. The `20` published contracts and `5` canonical
+compatibility scenarios are unchanged in number and unchanged in shape.
+
+**A note on versioning.** The package version in `pyproject.toml` and
+`basis_schemas.__version__` is now `0.2.2`, bumped from `0.2.1` to
+distribute this correction. No individual contract version changed.
+
+**What changed.** `basis-core`'s roadmap PR 37 ("Wire the five canonical
+scenarios end-to-end") was the first point in either repository's history
+where the merged operation-aware evaluation pipeline was compared, field by
+field, against these vectors. That comparison surfaced three repeatable
+disagreements, resolved by `basis-architecture`'s operation-aware
+evidence-provenance semantics clarification
+(`docs/architecture/operation-aware-evidence-provenance-semantics.md`):
+
+- **Top-level `explanation` is optional and non-authoritative.** Every
+  scenario's expected response, trace, audit evidence, and gateway audit
+  event now carry `explanation: null` at the top level, replacing
+  synthesized aggregate sentences no governed evaluation stage actually
+  produces. `reason_code` remains the authoritative machine-readable
+  explanation.
+- **Matched rule evidence preserves its authored `reason_code`/
+  `explanation` verbatim** — including a matched-but-non-decisive `ALLOW`
+  rule under deny precedence, which is genuine matched evidence even though
+  a matched `DENY` rule determines the final outcome. A wording
+  inconsistency between `deny-precedence`'s authored policy-bundle text
+  ("operations," plural) and its expected trace ("operation," singular) is
+  corrected to match the authored bundle text exactly. Non-matched and
+  skipped rules continue to omit authored match rationale.
+- **Bundle identity is retained for `NOT_APPLICABLE` and for a typed
+  semantic policy-validation failure.** The `not-applicable` and
+  `invalid-policy-bundle` scenarios' `bundle_id`/`bundle_version` — previously
+  `null` or absent — now carry the identity of the specific bundle that was
+  checked (and found out of scope) or rejected (for its duplicate rule
+  IDs). Bundle identity is provenance for which bundle was involved; it is
+  never a claim that the bundle applied, matched, or granted anything.
+
+The `invalid-policy-bundle` scenario's `v0.2.1` correction — classifying its
+duplicate-`rule_id` defect as `failure_reason: policy_validation_failure`,
+not `invalid_policy_bundle` — is unchanged and reverified by this release.
+
+**No contract schema, field, enum, or contract version changed** as part of
+this release, and **no authorization outcome changed**: every scenario's
+`outcome` / `evaluation_status` / `failure_reason` is identical to
+`v0.2.1`. This is a compatibility-fixture correction aligned to newly
+clarified architecture, not a new evaluator feature, a new schema family, a
+new reason-code vocabulary, or a breaking change.
+
+**Consumer direction.** Consumers using the canonical operation-aware
+compatibility vectors should update from the `v0.2.1` source snapshot to
+`v0.2.2`. As with prior releases, consume this repository's contracts and
+fixtures from a pinned source release, repository tag, or vendored
+snapshot — not by scraping `main`.
+
 ## v0.2.1 — Compatibility Vector Classification Fix
 
 **This is a patch release.** It corrects the failure-category

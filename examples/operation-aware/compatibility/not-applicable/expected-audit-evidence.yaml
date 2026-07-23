@@ -6,7 +6,9 @@ trace_id: trace-compat-not-applicable-001
 evaluation_status: completed
 outcome: not_applicable
 failure_reason: null
+bundle_id: bundle-compat-hvac-scope
+bundle_version: "1.0.0"
 matched_rule_ids: []
 reason_code: no_applicable_bundle
-explanation: No policy bundle's scope covers this chiller resource request.
+explanation: null
 recorded_at: "2026-07-09T09:15:01Z"

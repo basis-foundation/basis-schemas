@@ -14,4 +14,4 @@ audit_evidence_id: audit-compat-deny-precedence-001
 gateway_id: gateway-compat-vectors-01
 enforcement_action: deny
 reason_code: deny_rule_matched
-explanation: Deny precedence applied; gateway enforced the kernel deny.
+explanation: null

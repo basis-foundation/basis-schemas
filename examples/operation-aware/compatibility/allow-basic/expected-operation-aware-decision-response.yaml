@@ -16,4 +16,4 @@ bundle_id: bundle-compat-allow
 bundle_version: "1.0.0"
 trace_id: trace-compat-allow-001
 reason_code: allow_rule_matched
-explanation: Operator role matched an allow rule for read:ahu.
+explanation: null
